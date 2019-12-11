@@ -1,6 +1,7 @@
 package com.hwh.traffic;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
@@ -9,6 +10,7 @@ import com.baidu.location.LocationClientOption;
 import com.baidu.mapapi.CoordType;
 import com.baidu.mapapi.SDKInitializer;
 import com.baidu.mapapi.model.LatLng;
+import com.hwh.traffic.db.TrafficLab;
 
 
 /**
@@ -31,6 +33,9 @@ public class MapApplication extends Application {
         //包括BD09LL和GCJ02两种坐标，默认是BD09LL坐标。
         SDKInitializer.setCoordType(CoordType.BD09LL);
 
+        //初始化数据库 首次运行会自动创建数据库
+        new TrafficLab(this);
+
         // 开启定位图层
         mLocationClient = new LocationClient(getApplicationContext());     //声明LocationClient类
         //配置定位SDK参数
@@ -38,16 +43,12 @@ public class MapApplication extends Application {
         mLocationClient.registerLocationListener(myListener);    //注册监听函数
         //开启定位
         mLocationClient.start();
-        System.out.println("Application开始定位");
+        Log.d("百度地图定位application","Application开始定位");
 
     }
 
     public LatLng getLatLng() {
         return latLng;
-    }
-
-    public void setLatLng(LatLng latLng) {
-        this.latLng = latLng;
     }
 
     public BDLocation getBdLocation() {
@@ -87,7 +88,7 @@ public class MapApplication extends Application {
         public void onReceiveLocation(BDLocation location) {
             setBdLocation(location);
             latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            System.out.println("百度地图定位application" + latLng.toString());
+            Log.d("百度地图定位application",latLng.toString());
         }
     }
 

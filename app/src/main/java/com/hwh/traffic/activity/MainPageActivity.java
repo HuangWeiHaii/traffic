@@ -12,12 +12,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.baidu.mapapi.model.LatLng;
-import com.baidu.mapapi.model.LatLngBounds;
 import com.baidu.mapapi.search.core.PoiDetailInfo;
 import com.baidu.mapapi.search.core.PoiInfo;
 import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
-import com.baidu.mapapi.search.poi.PoiBoundSearchOption;
-import com.baidu.mapapi.search.poi.PoiCitySearchOption;
 import com.baidu.mapapi.search.poi.PoiDetailResult;
 import com.baidu.mapapi.search.poi.PoiDetailSearchResult;
 import com.baidu.mapapi.search.poi.PoiIndoorResult;
@@ -30,7 +27,6 @@ import com.hwh.traffic.MapApplication;
 import com.hwh.traffic.R;
 import com.hwh.traffic.busEntity.BusDomJson;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -98,19 +94,17 @@ public class MainPageActivity extends AppCompatActivity{
                     getStopInfoByLatLng(latLng);
                     while (poiInfos == null){
                         try {
+                            //poiInfos 在 getStopInfoByLatLng(latLng) 内赋值 需要等待POI搜索结果出来后在能结束
                             Thread.sleep(500);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }
                     //
-
-
                 }
                 else {
                     //错误处理
                 }
-
             }
         }.start();
         initViews();
@@ -145,11 +139,12 @@ public class MainPageActivity extends AppCompatActivity{
                             System.out.println(poiInfo.getAddress());
                             System.out.println(poiInfo.getName());
 
-                            //获取 路线信息 (15路;22路;77路;85路;312路;329路)
+                            //获取 路线信息如(15路;22路;77路;85路;312路;329路)
                             String routes = poiInfo.getAddress();
                             if (routes.contains(main_page_edit.getText().toString())){//85路
                                 //直接获取第一个 公交站点 (福建理工学校)
                                 System.out.println(poiInfo.getName());
+                                Toast.makeText(MainPageActivity.this,poiInfo.getName(),Toast.LENGTH_SHORT).show();
                                 break;
                             }
 
