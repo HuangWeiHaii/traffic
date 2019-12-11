@@ -25,7 +25,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwh.traffic.MapApplication;
 import com.hwh.traffic.R;
+import com.hwh.traffic.apiEntity.BusApi;
 import com.hwh.traffic.busEntity.BusDomJson;
+import com.hwh.traffic.db.TrafficLab;
 
 import java.util.List;
 
@@ -39,7 +41,7 @@ import okhttp3.Response;
  * @date 2019年12月10日16:56:09
  * @description 主页 Activity
  */
-public class MainPageActivity extends AppCompatActivity{
+public class MainPageActivity extends AppCompatActivity {
 
     private List<PoiInfo> poiInfos;
     private BusDomJson busDomJson = null;
@@ -57,7 +59,12 @@ public class MainPageActivity extends AppCompatActivity{
     private TextView main_user_text;
     private MapApplication mapApplication;
     private LatLng latLng;
-    private String route;
+    private String routeName;
+    private Long stopId = 0l; //站点ID
+    private String stopName; //路线名称
+    private Long route_id;  //正向路线ID
+    private Long oppsite_id; //反向路线ID
+    private String busApi; //实时公交API
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,39 +82,108 @@ public class MainPageActivity extends AppCompatActivity{
 
 
         mapApplication = (MapApplication) getApplication();
-        //开启一条线程去执行 POI 搜索公交站
 
-        new Thread(){
+        //更新 latlng 和 poiInfo 开启一条线程去执行 POI 搜索公交站
+        updatePoiInfo();
+        initViews();
+
+        //根据定位得到的站点名查询Stop_id
+//        getStopIdByStopName("农林大学");
+//        getRouteIdByRouteName("85路");
+//        busApi = getBusApi("85路", "农林大学");
+//        System.out.println(busApi);
+
+    }
+
+    /**
+     *
+     * @param stopName 公交站点名称
+     * @return 站点ID
+     */
+    public Long getStopIdByStopName(String stopName) {
+        TrafficLab trafficLab = mapApplication.getTrafficLab();
+        if (trafficLab != null) {
+            stopId = trafficLab.findStopIdByName(stopName);
+            System.out.println("站点ID=" + stopId);
+        }
+        return stopId;
+    }
+
+    /**
+     *
+     * @param routeName 路线名称
+     * @return  路线的正向ID和反向ID
+     */
+    public Long[] getRouteIdByRouteName(String routeName){
+        TrafficLab trafficLab = mapApplication.getTrafficLab();
+        if (trafficLab != null){
+            Long[] routeIds = trafficLab.findRouteIdAndOppositeIdByRouteName(routeName);
+            route_id = routeIds[0];
+            System.out.println("正向路线ID"+route_id);
+            oppsite_id = routeIds[1];
+            System.out.println("反向路线ID"+oppsite_id);
+        }
+        return new Long[]{route_id,oppsite_id};
+
+    }
+
+    //后期打算将这个函数放进Application中 进行定期更新
+    private void updatePoiInfo() {
+        new Thread() {
             @Override
             public void run() {
-                while (mapApplication.getLatLng() == null){
-                    try {
-                        Thread.sleep(1000);
-                        Log.d("百度地图定位MainPage","正在定位");
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                Log.d("百度地图定位MainPage","定位成功");
-                latLng = mapApplication.getLatLng();
-                if (latLng != null) {
-                    getStopInfoByLatLng(latLng);
-                    while (poiInfos == null){
+                while (true) {
+                    while (mapApplication.getLatLng() == null) {
                         try {
-                            //poiInfos 在 getStopInfoByLatLng(latLng) 内赋值 需要等待POI搜索结果出来后在能结束
                             Thread.sleep(500);
+                            Log.d("百度地图定位MainPage", "正在定位");
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }
-                    //
-                }
-                else {
-                    //错误处理
+                    Log.d("百度地图定位MainPage", "定位成功");
+                    //这里对经纬度信息进行了更新
+                    latLng = mapApplication.getLatLng();
+                    if (latLng != null) {
+                        //这个函数更新了poiInfo
+                        getStopInfoByLatLng(latLng);
+                        while (poiInfos == null) {
+                            try {
+                                //poiInfos 在 getStopInfoByLatLng(latLng) 内赋值 需要等待POI搜索结果出来后在能结束
+                                Thread.sleep(200);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        //
+                    } else {
+                        //错误处理
+                    }
+
+                    try {
+                        //每十秒更新一次
+                        Thread.sleep(5000);
+                        Log.d("百度地图定位MainPage","更新latlng 与 poiInfo");
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }.start();
-        initViews();
+    }
+
+    /**
+     *
+     * @param routeName
+     * @param stopName
+     * @return 获取实时公交的接口url
+     */
+    public String getBusApi(String routeName,String stopName){
+        Long[] routeIds = getRouteIdByRouteName(routeName);
+        Long routeId = routeIds[0];
+        Long stopId = getStopIdByStopName(stopName);
+        String busApi = "https://app.ibuscloud.com/v11/bus/getNextBusByRouteStopId?"+new BusApi(String.valueOf(routeId),String.valueOf(stopId)).toString();
+        return busApi;
     }
 
     private void initViews() {
@@ -128,11 +204,11 @@ public class MainPageActivity extends AppCompatActivity{
         main_page_search.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (main_page_edit.getText().toString().equals("")){
-                    Toast.makeText(MainPageActivity.this,"请输入路线",Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    route = main_page_edit.getText().toString();
+                if (main_page_edit.getText().toString().equals("")) {
+                    Toast.makeText(MainPageActivity.this, "请输入路线", Toast.LENGTH_SHORT).show();
+                } else {
+//                    updatePoiInfo();
+                    routeName = main_page_edit.getText().toString();
                     if (poiInfos != null) {
                         //对POI公交信息进行遍历
                         for (PoiInfo poiInfo : poiInfos) {
@@ -141,15 +217,18 @@ public class MainPageActivity extends AppCompatActivity{
 
                             //获取 路线信息如(15路;22路;77路;85路;312路;329路)
                             String routes = poiInfo.getAddress();
-                            if (routes.contains(main_page_edit.getText().toString())){//85路
+                            if (routes.contains(main_page_edit.getText().toString())) {//85路
                                 //直接获取第一个 公交站点 (福建理工学校)
-                                System.out.println(poiInfo.getName());
-                                Toast.makeText(MainPageActivity.this,poiInfo.getName(),Toast.LENGTH_SHORT).show();
+                                stopName = poiInfo.getName();
+                                System.out.println(stopName);
+                                busApi = getBusApi(routeName,stopName);
+                                System.out.println(busApi);
+                                //通过调用接口得到实时公交数据再进行页面渲染
+                                Toast.makeText(MainPageActivity.this, poiInfo.getName(), Toast.LENGTH_SHORT).show();
+
                                 break;
                             }
-
                         }
-
                     }
                 }
             }
@@ -223,17 +302,17 @@ public class MainPageActivity extends AppCompatActivity{
 
 
     /**
-     * @description 通过经纬度得到 公交站点信息
      * @param latLng
+     * @description 通过经纬度得到 公交站点信息
      */
     public void getStopInfoByLatLng(LatLng latLng) {
 
-        Log.d("百度地图POI","开始POI搜索");
+        Log.d("百度地图POI", "开始POI搜索");
         PoiSearch mPoiSearch = PoiSearch.newInstance();
         mPoiSearch.setOnGetPoiSearchResultListener(new OnGetPoiSearchResultListener() {
             @Override
             public void onGetPoiResult(PoiResult poiResult) {
-                Log.d("百度地图POI","获取到poiResult");
+                Log.d("百度地图POI", "获取到poiResult");
                 List<PoiInfo> allPoi = poiResult.getAllPoi();
                 poiInfos = allPoi;
                 Log.d("百度地图POI", String.valueOf(poiResult.getTotalPoiNum()));
@@ -246,6 +325,7 @@ public class MainPageActivity extends AppCompatActivity{
                     }
                 }*/
             }
+
             @Override
             public void onGetPoiDetailResult(PoiDetailResult poiDetailResult) {
 
@@ -253,7 +333,7 @@ public class MainPageActivity extends AppCompatActivity{
 
             @Override
             public void onGetPoiDetailResult(PoiDetailSearchResult poiDetailSearchResult) {
-                Log.d("百度地图POI","poiDetailSearchResult");
+                Log.d("百度地图POI", "poiDetailSearchResult");
                 List<PoiDetailInfo> infoList = poiDetailSearchResult.getPoiDetailInfoList();
                 for (PoiDetailInfo poiDetailInfo : infoList) {
                     System.out.println(poiDetailInfo.getName());
@@ -266,7 +346,7 @@ public class MainPageActivity extends AppCompatActivity{
             }
         });
         mPoiSearch.searchNearby(new PoiNearbySearchOption()
-                .radius(1000)
+                .radius(2000)
                 .location(latLng)
                 .keyword("公交")
                 .scope(2)
@@ -274,33 +354,35 @@ public class MainPageActivity extends AppCompatActivity{
                 .radiusLimit(true)
         );
 
+
+
     }
 
     /**
+     * @param BusApi 实时公交数据
      * @description 异步获取Json数据
-     * @param url
      */
-    public void getDatasync(final String url){
+    public void getDatasync(final String BusApi) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     OkHttpClient client = new OkHttpClient();//创建OkHttpClient对象
                     Request request = new Request.Builder()
-                            .url(url)//请求接口。如果需要传参拼接到接口后面。
+                            .url(BusApi)//请求接口。如果需要传参拼接到接口后面。
                             .build();//创建Request 对象
                     Response response = null;
 
                     response = client.newCall(request).execute();//得到Response 对象
                     if (response.isSuccessful()) {
-                        Log.d("实时公交信息","response.code()=="+response.code());
-                        Log.d("实时公交信息","response.message()=="+response.message());
+                        Log.d("实时公交信息", "response.code()==" + response.code());
+                        Log.d("实时公交信息", "response.message()==" + response.message());
 //                        Log.d("实时公交信息","res=="+response.body().string());
                         String busInfo = response.body().string();
-                        Log.d("businfo",busInfo);
+                        Log.d("businfo", busInfo);
                         busDomJson = MAPPER.readValue(busInfo, BusDomJson.class);
-                        if (busDomJson != null){
-                            Log.d("实时公交信息","读取实时公交成功");
+                        if (busDomJson != null) {
+                            Log.d("实时公交信息", "读取实时公交成功");
                         }
                         //此时的代码执行在子线程，修改UI的操作请使用handler跳转到UI线程。
                     }
@@ -311,7 +393,7 @@ public class MainPageActivity extends AppCompatActivity{
         }).start();
     }
 
-    public void getStopName(List<PoiInfo> poiInfos){
+    public void getStopName(List<PoiInfo> poiInfos) {
         if (poiInfos != null) {
             for (PoiInfo poiInfo : poiInfos) {
 //                Log.d("百度地图POI", poiInfo.address);

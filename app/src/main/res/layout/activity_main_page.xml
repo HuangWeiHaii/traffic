@@ -39,7 +39,7 @@
                 android:paddingRight="170dp"
                 android:textColor="#090909"
                 android:textColorHint="#C4C4C4"
-                android:textSize="18sp"
+                android:textSize="15sp"
                 >
             </EditText>
             <Button

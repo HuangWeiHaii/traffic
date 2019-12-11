@@ -24,6 +24,7 @@ public class MapApplication extends Application {
     private LocationClient mLocationClient = null;
     private BDLocation bdLocation = null;
     public LocationListener myListener = new MapApplication.LocationListener();
+    public TrafficLab trafficLab = null;
     @Override
     public void onCreate() {
         super.onCreate();
@@ -34,7 +35,7 @@ public class MapApplication extends Application {
         SDKInitializer.setCoordType(CoordType.BD09LL);
 
         //初始化数据库 首次运行会自动创建数据库
-        new TrafficLab(this);
+        trafficLab = new TrafficLab(this);
 
         // 开启定位图层
         mLocationClient = new LocationClient(getApplicationContext());     //声明LocationClient类
@@ -45,6 +46,10 @@ public class MapApplication extends Application {
         mLocationClient.start();
         Log.d("百度地图定位application","Application开始定位");
 
+    }
+
+    public TrafficLab getTrafficLab() {
+        return trafficLab;
     }
 
     public LatLng getLatLng() {
