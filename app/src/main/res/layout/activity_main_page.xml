@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".activity.MainPageActivity">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingBottom="10dp"
+        android:background="@color/main_bg">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_alignParentBottom="true"
+            android:background="@color/write"
+            android:paddingTop="25dp">
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="10dp"
+                android:paddingLeft="20dp"
+                android:paddingRight="5dp"
+                android:paddingBottom="30dp"
+                android:src="@drawable/search">
+            </ImageView>
+            <EditText
+                android:id="@+id/main_page_edit"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="请输入路线"
+                android:paddingRight="170dp"
+                android:textColor="#090909"
+                android:textColorHint="#C4C4C4"
+                android:textSize="18sp"
+                >
+            </EditText>
+            <Button
+                android:id="@+id/main_page_search"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="一键查车"
+                >
+            </Button>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@color/write">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="340dp"
+                    android:layout_height="wrap_content"
+                    android:text="85路 方向 福建理工学校"
+                    android:textSize="20sp"
+                    android:paddingBottom="10dp"
+                    android:paddingTop="10dp"
+                    android:textColor="#090909"
+                    android:paddingLeft="20dp"
+                    android:layout_gravity="center">
+                </TextView>
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/delete"
+                    android:layout_gravity="center">
+
+                </ImageView>
+
+            </LinearLayout>
+            <LinearLayout
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="340dp"
+                    android:layout_height="wrap_content"
+                    android:text="85路 方向 福建理工学校"
+                    android:textSize="20sp"
+                    android:paddingBottom="10dp"
+                    android:paddingTop="10dp"
+                    android:textColor="#090909"
+                    android:paddingLeft="20dp"
+                    android:layout_gravity="center">
+                </TextView>
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/delete"
+                    android:layout_gravity="center">
+
+                </ImageView>
+
+            </LinearLayout>
+            <LinearLayout
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="340dp"
+                    android:layout_height="wrap_content"
+                    android:text="85路 方向 福建理工学校"
+                    android:textSize="20sp"
+                    android:paddingBottom="10dp"
+                    android:paddingTop="10dp"
+                    android:textColor="#090909"
+                    android:paddingLeft="20dp"
+                    android:layout_gravity="center">
+                </TextView>
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/delete"
+                    android:layout_gravity="center">
+
+                </ImageView>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+        <!--导航栏-->
+        <include layout="@layout/acticity_navigationbar"></include>
+        <!--导航栏-->
+
+    </RelativeLayout>
+
+
+</androidx.appcompat.widget.LinearLayoutCompat>
