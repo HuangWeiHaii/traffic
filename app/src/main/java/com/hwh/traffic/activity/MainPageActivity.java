@@ -29,6 +29,8 @@ import com.hwh.traffic.apiEntity.BusApi;
 import com.hwh.traffic.busEntity.BusDomJson;
 import com.hwh.traffic.db.TrafficLab;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -204,11 +206,11 @@ public class MainPageActivity extends AppCompatActivity {
         main_page_search.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (main_page_edit.getText().toString().equals("")) {
+                if (StringUtils.isEmpty(main_page_edit.getText().toString())) {
                     Toast.makeText(MainPageActivity.this, "请输入路线", Toast.LENGTH_SHORT).show();
                 } else {
 //                    updatePoiInfo();
-                    routeName = main_page_edit.getText().toString();
+                    routeName = StringUtils.trim(main_page_edit.getText().toString());
                     if (poiInfos != null) {
                         //对POI公交信息进行遍历
                         for (PoiInfo poiInfo : poiInfos) {
