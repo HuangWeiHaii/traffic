@@ -67,6 +67,35 @@
                         android:padding="10dp">
                     </TextView>
 
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/stop_select"
+                        android:padding="10dp">
+                    </ImageView>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="白湖亭"
+                        android:textColor="@color/orange"
+                        android:textSize="20sp"
+                        android:padding="10dp">
+                    </TextView>
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/small_bus"
+                        android:padding="10dp">
+                    </ImageView>
+
                 </LinearLayout>-->
 
 

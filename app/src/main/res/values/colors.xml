@@ -7,5 +7,6 @@
     <color name="black">#070707</color>
     <color name="main_bg">#ECECEC</color>
     <color name="main_text_select">#1296db</color>
+    <color name="orange">#FF5722</color>
 
 </resources>
