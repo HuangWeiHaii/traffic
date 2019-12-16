@@ -1,9 +1,10 @@
 
 package com.hwh.traffic.busEntity;
+import java.io.Serializable;
 import java.util.List;
 
 
-public class Item {
+public class Item implements Serializable {
 
     private long routeId;
     private NextBuses nextBuses;

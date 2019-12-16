@@ -23,11 +23,6 @@
         <activity android:name=".activity.BusInfoActivity"
             android:theme="@style/Theme.AppCompat">
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name=".activity.MainPageActivity"
@@ -39,6 +34,10 @@
             android:name=".activity.WelcomeActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar">
 
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
 
         </activity>
 

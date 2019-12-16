@@ -40,12 +40,13 @@
             android:background="@color/main_bg">
 
             <LinearLayout
+                android:id="@+id/bus_info_list"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
                 <!--这是一条路线的布局-->
-                <LinearLayout
+               <!-- <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
@@ -55,7 +56,6 @@
                         android:layout_height="wrap_content"
                         android:src="@drawable/bus_start"
                         android:padding="10dp">
-
                     </ImageView>
 
                     <TextView
@@ -67,283 +67,10 @@
                         android:padding="10dp">
                     </TextView>
 
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                </LinearLayout>-->
 
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/num_2"
-                        android:padding="10dp">
 
-                    </ImageView>
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="则徐大道"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:padding="10dp">
-                    </TextView>
-
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/num_3"
-                        android:padding="10dp">
-
-                    </ImageView>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="三叉街新村站"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:padding="10dp">
-                    </TextView>
-
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/num_4"
-                        android:padding="10dp">
-
-                    </ImageView>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="三叉街站"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:padding="10dp">
-                    </TextView>
-
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/num_5"
-                        android:padding="10dp">
-
-                    </ImageView>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="六一南三叉街口站"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:padding="10dp">
-                    </TextView>
-
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/num_6"
-                        android:padding="10dp">
-
-                    </ImageView>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="龙津站"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:padding="10dp">
-                    </TextView>
-
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/num_7"
-                        android:padding="10dp">
-
-                    </ImageView>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="埔顶站"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:padding="10dp">
-                    </TextView>
-
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/num_8"
-                        android:padding="10dp">
-
-                    </ImageView>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="桥南站"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:padding="10dp">
-                    </TextView>
-
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/num_9"
-                        android:padding="10dp">
-
-                    </ImageView>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="台江步行街站"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:padding="10dp">
-                    </TextView>
-
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/num_10"
-                        android:padding="10dp">
-
-                    </ImageView>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="台江天华站"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:padding="10dp">
-                    </TextView>
-
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/num_11"
-                        android:padding="10dp">
-
-                    </ImageView>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="台江后洲站"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:padding="10dp">
-                    </TextView>
-
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/num_12"
-                        android:padding="10dp">
-
-                    </ImageView>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="达道站"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:padding="10dp">
-                    </TextView>
-
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/bus_end"
-                        android:padding="10dp">
-
-                    </ImageView>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="西门站"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:padding="10dp">
-                    </TextView>
-
-                </LinearLayout>
 
 
             </LinearLayout>
@@ -358,7 +85,62 @@
 
 
     <!--导航栏-->
-    <include layout="@layout/acticity_navigationbar"></include>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/write">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/main_page_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/oppsite">
+            </ImageView>
+
+            <TextView
+                android:id="@+id/main_page_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="反向"
+                android:textColor="@color/black">
+            </TextView>
+        </LinearLayout>
+        <!--首页-->
+
+        <!--收藏-->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/main_like_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/flush">
+            </ImageView>
+
+            <TextView
+                android:id="@+id/main_like_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="刷新"
+                android:textColor="@color/black">
+            </TextView>
+        </LinearLayout>
+
+
+
+    </LinearLayout>
     <!--导航栏-->
 
 </LinearLayout>

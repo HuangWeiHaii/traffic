@@ -3,13 +3,15 @@
   */
 package com.hwh.traffic.busEntity;
 
+import java.io.Serializable;
+
 /**
  * Auto-generated: 2019-10-12 15:29:46
  *
  * @author bejson.com (i@bejson.com)
  * @website http://www.bejson.com/java2pojo/
  */
-public class Routes {
+public class Routes implements Serializable {
     public boolean isRegular() {
         return regular;
     }

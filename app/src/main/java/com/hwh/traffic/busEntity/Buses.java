@@ -2,7 +2,9 @@
 package com.hwh.traffic.busEntity;
 
 
-public class Buses {
+import java.io.Serializable;
+
+public class Buses implements Serializable {
 
     private long busId;
     private String busNo;

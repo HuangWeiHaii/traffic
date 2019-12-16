@@ -1,9 +1,10 @@
 
 package com.hwh.traffic.busEntity;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class BusDomJson {
+public class BusDomJson implements Serializable {
 
     private int result;
     private String message;
@@ -39,4 +40,13 @@ public class BusDomJson {
          return item;
      }
 
+    @Override
+    public String toString() {
+        return "BusDomJson{" +
+                "result=" + result +
+                ", message='" + message + '\'' +
+                ", item=" + item +
+                ", items=" + items +
+                '}';
+    }
 }

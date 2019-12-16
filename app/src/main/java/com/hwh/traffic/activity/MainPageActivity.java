@@ -2,6 +2,7 @@ package com.hwh.traffic.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -28,9 +29,11 @@ import com.hwh.traffic.R;
 import com.hwh.traffic.apiEntity.BusApi;
 import com.hwh.traffic.busEntity.BusDomJson;
 import com.hwh.traffic.db.TrafficLab;
+import com.hwh.traffic.utils.HttpUtils;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.IOException;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -227,6 +230,22 @@ public class MainPageActivity extends AppCompatActivity {
                                 System.out.println(busApi);
                                 //通过调用接口得到实时公交数据再进行页面渲染
                                 Toast.makeText(MainPageActivity.this, poiInfo.getName(), Toast.LENGTH_SHORT).show();
+                                try {
+                                    //不可在主线程中使用HTTP请求 只能在异步请求
+                                    getDatasync(busApi);
+                                    while (busDomJson == null) {
+                                        Thread.sleep(200);
+                                        Log.d("MainpageActivity","正在获取公交数据");
+                                    }
+
+                                    Log.d("MainpageActivity","获取成功");
+                                    Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
+                                    intent.putExtra("busInfo", busDomJson);
+                                    startActivity(intent);
+
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
 
                                 break;
                             }
@@ -361,17 +380,17 @@ public class MainPageActivity extends AppCompatActivity {
     }
 
     /**
-     * @param BusApi 实时公交数据
+     * @param busApi 实时公交数据
      * @description 异步获取Json数据
      */
-    public void getDatasync(final String BusApi) {
+    public void getDatasync(final String busApi) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     OkHttpClient client = new OkHttpClient();//创建OkHttpClient对象
                     Request request = new Request.Builder()
-                            .url(BusApi)//请求接口。如果需要传参拼接到接口后面。
+                            .url(busApi)//请求接口。如果需要传参拼接到接口后面。
                             .build();//创建Request 对象
                     Response response = null;
 
@@ -394,6 +413,8 @@ public class MainPageActivity extends AppCompatActivity {
             }
         }).start();
     }
+
+
 
     public void getStopName(List<PoiInfo> poiInfos) {
         if (poiInfos != null) {

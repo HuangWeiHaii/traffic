@@ -1,8 +1,9 @@
 
 package com.hwh.traffic.busEntity;
+import java.io.Serializable;
 import java.util.List;
 
-public class Stops {
+public class Stops implements Serializable {
 
     private long routeId;
     private long stopId;
