@@ -75,16 +75,6 @@ public class MainPageActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_page);
-      /*  getDatasync("https://app.ibuscloud.com/v11/bus/getNextBusByRouteStopId?city=350100\n" +
-                "&userLat=26.074268\n" +
-                "&userLng=119.296389\n" +
-                "&stopId=3501000100105557\n" +
-                "&routeId=3501000100097601\n" +
-                "&h5Platform=7\n" +
-                "&radius=1000\n" +
-                "&lat=26.074268\n" +
-                "&lng=119.296389");//输入URL*/
-
 
         mapApplication = (MapApplication) getApplication();
 
@@ -240,7 +230,8 @@ public class MainPageActivity extends AppCompatActivity {
 
                                     Log.d("MainpageActivity","获取成功");
                                     Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
-                                    intent.putExtra("busInfo", busDomJson);
+                                    intent.putExtra("BUS_INFO", busDomJson);
+                                    intent.putExtra("BUS_API",busApi);
                                     startActivity(intent);
 
                                 } catch (Exception e) {
