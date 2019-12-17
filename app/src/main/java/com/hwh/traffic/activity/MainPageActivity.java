@@ -29,11 +29,9 @@ import com.hwh.traffic.R;
 import com.hwh.traffic.apiEntity.BusApi;
 import com.hwh.traffic.busEntity.BusDomJson;
 import com.hwh.traffic.db.TrafficLab;
-import com.hwh.traffic.utils.HttpUtils;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -154,7 +152,6 @@ public class MainPageActivity extends AppCompatActivity {
                     } else {
                         //错误处理
                     }
-
                     try {
                         //每十秒更新一次
                         Thread.sleep(5000);
@@ -204,6 +201,7 @@ public class MainPageActivity extends AppCompatActivity {
                 } else {
 //                    updatePoiInfo();
                     routeName = StringUtils.trim(main_page_edit.getText().toString());
+                    boolean isStopNearby = false;
                     if (poiInfos != null) {
                         //对POI公交信息进行遍历
                         for (PoiInfo poiInfo : poiInfos) {
@@ -213,8 +211,9 @@ public class MainPageActivity extends AppCompatActivity {
                             //获取 路线信息如(15路;22路;77路;85路;312路;329路)
                             String routes = poiInfo.getAddress();
                             if (routes.contains(main_page_edit.getText().toString())) {//85路
+                                isStopNearby = true;
                                 //直接获取第一个 公交站点 (福建理工学校)
-                                stopName = poiInfo.getName();
+                                stopName = StringUtils.removeEnd(poiInfo.getName(), "站");
                                 System.out.println(stopName);
                                 busApi = getBusApi(routeName,stopName);
                                 System.out.println(busApi);
@@ -227,20 +226,41 @@ public class MainPageActivity extends AppCompatActivity {
                                         Thread.sleep(200);
                                         Log.d("MainpageActivity","正在获取公交数据");
                                     }
-
                                     Log.d("MainpageActivity","获取成功");
                                     Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
                                     intent.putExtra("BUS_INFO", busDomJson);
                                     intent.putExtra("BUS_API",busApi);
+                                    intent.putExtra("BUS_STOPNAME",stopName);
                                     startActivity(intent);
-
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
-
                                 break;
                             }
                         }
+                        if (!isStopNearby){
+                            Log.d("MainpageActivity","附近无该路线的公交站点");
+                            //如果在附近没查询到指定路线的 附近站点
+                            String busApi = getBusApi(routeName, "农林大学");
+                            try {
+                                //不可在主线程中使用HTTP请求 只能在异步请求
+                                getDatasync(busApi);
+                                while (busDomJson == null) {
+                                    Thread.sleep(200);
+                                    Log.d("MainpageActivity","正在获取公交数据");
+                                }
+                                Log.d("MainpageActivity","获取成功");
+                                Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
+                                intent.putExtra("BUS_INFO", busDomJson);
+                                intent.putExtra("BUS_API",busApi);
+                                intent.putExtra("BUS_STOPNAME","农林大学");
+                                startActivity(intent);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+
                     }
                 }
             }
@@ -328,14 +348,6 @@ public class MainPageActivity extends AppCompatActivity {
                 List<PoiInfo> allPoi = poiResult.getAllPoi();
                 poiInfos = allPoi;
                 Log.d("百度地图POI", String.valueOf(poiResult.getTotalPoiNum()));
-             /*   if (allPoi != null) {
-                    for (PoiInfo poiInfo : allPoi) {
-                        Log.d("百度地图POI", poiInfo.address);
-                        Log.d("百度地图POI", poiInfo.name);
-                        Log.d("百度地图POI", "-----------------------");
-
-                    }
-                }*/
             }
 
             @Override
@@ -415,7 +427,6 @@ public class MainPageActivity extends AppCompatActivity {
                 Log.d("百度地图POI", "-----------------------stopname");
             }
         }
-
 
     }
 

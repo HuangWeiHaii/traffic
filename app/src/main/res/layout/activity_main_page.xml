@@ -13,13 +13,20 @@
         android:paddingBottom="10dp"
         android:background="@color/main_bg">
 
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/fafu_img">
 
-        <LinearLayout
+        </ImageView>
+
+
+       <!-- <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_alignParentBottom="true"
-            android:background="@color/write"
+            android:background="@color/white"
             android:paddingTop="25dp">
             <ImageView
                 android:layout_width="wrap_content"
@@ -32,15 +39,14 @@
             </ImageView>
             <EditText
                 android:id="@+id/main_page_edit"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:hint="请输入路线"
-                android:paddingRight="170dp"
                 android:textColor="#090909"
                 android:textColorHint="#C4C4C4"
                 android:textSize="15sp"
-                >
+                android:background="@null">
             </EditText>
             <Button
                 android:id="@+id/main_page_search"
@@ -48,6 +54,43 @@
                 android:layout_height="wrap_content"
                 android:text="一键查车"
                 >
+            </Button>
+
+        </LinearLayout>-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_alignParentBottom="true"
+            android:background="@color/white"
+            android:gravity="center">
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/search"
+                android:padding="8dp">
+            </ImageView>
+
+            <EditText
+                android:id="@+id/main_page_edit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="请输入路线"
+                android:textColor="#090909"
+                android:textColorHint="#C4C4C4"
+                android:textSize="25sp"
+                android:background="@null">
+            </EditText>
+
+            <Button
+                android:id="@+id/main_page_search"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="一键查车"
+                android:background="@color/main_bg"
+                android:textColor="@color/black"
+                android:paddingRight="10dp">
             </Button>
 
         </LinearLayout>
@@ -58,7 +101,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@color/write">
+        android:background="@color/white">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -73,6 +116,7 @@
                 <TextView
                     android:layout_width="340dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="85路 方向 福建理工学校"
                     android:textSize="20sp"
                     android:paddingBottom="10dp"
@@ -86,7 +130,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@drawable/delete"
-                    android:layout_gravity="center">
+                    android:layout_gravity="center"
+                    android:paddingRight="10dp">
 
                 </ImageView>
 
@@ -99,6 +144,7 @@
                 <TextView
                     android:layout_width="340dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="85路 方向 福建理工学校"
                     android:textSize="20sp"
                     android:paddingBottom="10dp"
@@ -112,7 +158,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@drawable/delete"
-                    android:layout_gravity="center">
+                    android:layout_gravity="center"
+                    android:paddingRight="10dp">
 
                 </ImageView>
 
@@ -125,6 +172,7 @@
                 <TextView
                     android:layout_width="340dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="85路 方向 福建理工学校"
                     android:textSize="20sp"
                     android:paddingBottom="10dp"
@@ -138,7 +186,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@drawable/delete"
-                    android:layout_gravity="center">
+                    android:layout_gravity="center"
+                    android:paddingRight="10dp">
 
                 </ImageView>
 
