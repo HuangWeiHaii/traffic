@@ -32,7 +32,7 @@ public class MapApplication extends Application {
         SDKInitializer.initialize(this);
         //自4.3.0起，百度地图SDK所有接口均支持百度坐标和国测局坐标，用此方法设置您使用的坐标类型.
         //包括BD09LL和GCJ02两种坐标，默认是BD09LL坐标。
-        SDKInitializer.setCoordType(CoordType.BD09LL);
+        SDKInitializer.setCoordType(CoordType.GCJ02);
 
         //初始化数据库 首次运行会自动创建数据库
         trafficLab = new TrafficLab(this);
@@ -68,7 +68,7 @@ public class MapApplication extends Application {
     private void initLocation() {
         LocationClientOption option = new LocationClientOption();
         option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
-        option.setCoorType("bd09ll");//可选，默认gcj02，设置返回的定位结果坐标系
+        option.setCoorType("gcj02");//可选，默认gcj02，设置返回的定位结果坐标系
         int span = 5000;
         option.setScanSpan(span);//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
         option.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要

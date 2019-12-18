@@ -9,7 +9,7 @@ import java.net.*;
 /**
  * 发送请求得到数据信息的接口类
  */
-public class HttpUtils {
+public class HttpUtil {
 
     private static HttpURLConnection conn;
     private static BufferedReader bfr;

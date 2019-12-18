@@ -6,33 +6,91 @@
     android:orientation="vertical"
     tools:context=".activity.BusInfoActivity">
 
+
     <LinearLayout
+        android:id="@+id/bus_info_target"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center">
-
-        <TextView
-            android:layout_width="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@color/white">
+        <!--<LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="25sp"
-            android:gravity="center"
-            android:background="@color/white"
-            android:text="2站"
-            android:textColor="@color/black">
-        </TextView>
+            android:orientation="vertical">
 
-        <TextView
-            android:layout_width="match_parent"
+           &lt;!&ndash; <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textSize="25sp"
+                android:gravity="center"
+                android:background="@color/white"
+                android:text="2站"
+                android:textColor="@color/black">
+            </TextView>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textSize="20sp"
+                android:gravity="center"
+                android:background="@color/white"
+                android:text="2分钟/700米"
+                android:textColor="@color/black">
+            </TextView>&ndash;&gt;
+
+        &lt;!&ndash;    <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="等待发车..."
+                android:gravity="center"
+                android:textSize="25sp"
+                android:padding="15dp"
+                android:textColor="@color/black"
+                android:background="@color/white"></TextView>&ndash;&gt;
+
+        </LinearLayout>-->
+        <!--<LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
+            android:orientation="vertical"
             android:gravity="center"
-            android:background="@color/white"
-            android:text="小于1分钟/360米"
-            android:textColor="@color/black">
-        </TextView>
+            android:layout_marginLeft="30dp"
+            android:layout_marginStart="30dp">
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="25sp"
+                android:gravity="center"
+                android:background="@color/white"
+                android:text="2站"
+                android:textColor="@color/black">
+            </TextView>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:gravity="center"
+                android:background="@color/white"
+                android:text="2分钟/700米"
+                android:textColor="@color/black">
+            </TextView>
+
+            &lt;!&ndash;<TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="等待发车"
+                android:gravity="center"
+                android:textSize="25sp"
+                android:padding="15dp"
+                android:textColor="@color/black"
+                android:background="@color/white"></TextView>&ndash;&gt;
+
+        </LinearLayout>-->
     </LinearLayout>
+
 
 
     <LinearLayout
@@ -104,10 +162,6 @@
                     </ImageView>
 
                 </LinearLayout>-->
-
-
-
-
 
             </LinearLayout>
 

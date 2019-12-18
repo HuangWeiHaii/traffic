@@ -25,10 +25,11 @@ import com.baidu.mapapi.search.poi.PoiSearch;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwh.traffic.MapApplication;
+import com.hwh.traffic.BusApiEntity.NewBusApi;
 import com.hwh.traffic.R;
-import com.hwh.traffic.apiEntity.BusApi;
-import com.hwh.traffic.busEntity.BusDomJson;
 import com.hwh.traffic.db.TrafficLab;
+import com.hwh.traffic.busEntity.BusDomJson;
+import com.hwh.traffic.utils.ButtonUtil;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -173,8 +174,9 @@ public class MainPageActivity extends AppCompatActivity {
     public String getBusApi(String routeName,String stopName){
         Long[] routeIds = getRouteIdByRouteName(routeName);
         Long routeId = routeIds[0];
-        Long stopId = getStopIdByStopName(stopName);
-        String busApi = "https://app.ibuscloud.com/v11/bus/getNextBusByRouteStopId?"+new BusApi(String.valueOf(routeId),String.valueOf(stopId)).toString();
+//        Long stopId = getStopIdByStopName(stopName);
+//        String busApi = "https://app.ibuscloud.com/v11/bus/getNextBusByRouteStopId?"+new BusApi(String.valueOf(routeId),String.valueOf(stopId)).toString();
+        String busApi = "https://app.ibuscloud.com/v11/bus/getBusPositionByRouteId?"+ new NewBusApi(String.valueOf(routeId),latLng).toString();
         return busApi;
     }
 
@@ -196,6 +198,11 @@ public class MainPageActivity extends AppCompatActivity {
         main_page_search.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                if (ButtonUtil.isFastDoubleClick()){
+                    return;
+                }
+
                 if (StringUtils.isEmpty(main_page_edit.getText().toString())) {
                     Toast.makeText(MainPageActivity.this, "请输入路线", Toast.LENGTH_SHORT).show();
                 } else {
@@ -417,17 +424,9 @@ public class MainPageActivity extends AppCompatActivity {
         }).start();
     }
 
-
-
-    public void getStopName(List<PoiInfo> poiInfos) {
-        if (poiInfos != null) {
-            for (PoiInfo poiInfo : poiInfos) {
-//                Log.d("百度地图POI", poiInfo.address);
-//                Log.d("百度地图POI", poiInfo.name);
-                Log.d("百度地图POI", "-----------------------stopname");
-            }
-        }
-
+    @Override
+    protected void onPause() {
+        super.onPause();
+        busDomJson = null;
     }
-
 }
