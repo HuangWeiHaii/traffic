@@ -1,5 +1,6 @@
 package com.hwh.traffic.activity;
 
+import androidx.annotation.LongDef;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -36,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class BusInfoActivity extends AppCompatActivity implements View.OnClickListener{
+public class BusInfoActivity extends AppCompatActivity implements View.OnClickListener {
 
 
     private LinearLayout bus_info_list;
@@ -45,9 +46,11 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     private List<Integer> imageView_bus_list = new ArrayList<>();
     private List<Integer> textView_list = new ArrayList<>();
     private BusDomJson busInfo = null;
-    private String busApi = null;
+    private String busApi[] = null;
     private static ObjectMapper MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private String now_stopName;
+    private String oppsite_api;
+    private String forw_api;
     //高亮站点的索引
     private int stop_index = 0;
     private boolean isNear = false;//用来确认是否有附近站点
@@ -67,10 +70,15 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
 
 
         busInfo = (BusDomJson) getIntent().getSerializableExtra("BUS_INFO");
-        busApi = getIntent().getStringExtra("BUS_API");
+        busApi = getIntent().getStringArrayExtra("BUS_API");
         now_stopName = getIntent().getStringExtra("BUS_STOPNAME");
+
+        forw_api = busApi[0];
+        oppsite_api = busApi[1];
+
         System.out.println(busInfo);
-        System.out.println(busApi);
+        System.out.println("正向API = " + forw_api);
+        System.out.println("反向API = " + oppsite_api);
         System.out.println(now_stopName);
 
         //将实时公交信息渲染 并设置按钮监听
@@ -80,20 +88,31 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
 
     /**
      * @description 渲染实时公交信息 设置监听等等
-     *
      */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void getBusListUI(final BusDomJson busInfo) {
 
         bus_info_list = findViewById(R.id.bus_info_list);
         ImageView flush_img = findViewById(R.id.bus_img_flush);
+        ImageView bus_img_opposite = findViewById(R.id.bus_img_opposite);
         flush_img.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (ButtonUtil.isFastDoubleClick()){
+                if (ButtonUtil.isFastDoubleClick()) {
                     return;
                 }
                 updataBusListInfo();
+            }
+        });
+
+        bus_img_opposite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ButtonUtil.isFastDoubleClick()) {
+                    return;
+                }
+                //反向
+                oppositeBusListInfo();
             }
         });
 
@@ -105,7 +124,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
         for (Stops stops : stopsList) {
 
             List<Buses> list = stops.getBuses();
-            if (list != null && list.size() != 0){
+            if (list != null && list.size() != 0) {
                 indexList.add(stopsList.indexOf(stops)); //添加公交车在stopList中的索引值 到 indexList
             }
 
@@ -115,7 +134,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
             ImageView imageView_small_bus = new ImageView(getApplicationContext());
             TextView mTextView_stop = new TextView(getApplicationContext());
             //设置10dp
-            int dp_10 = DensityUtil.dip2px(getApplicationContext(),10);
+            int dp_10 = DensityUtil.dip2px(getApplicationContext(), 10);
 
             //需要先addView
             bus_info_list.addView(mLinearLayout);
@@ -139,7 +158,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
             lp_ImageView_point.width = ViewGroup.LayoutParams.WRAP_CONTENT;
             lp_ImageView_point.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             mImageView_point.setImageResource(R.drawable.point);
-            mImageView_point.setPadding(dp_10,dp_10,dp_10,dp_10);
+            mImageView_point.setPadding(dp_10, dp_10, dp_10, dp_10);
             mImageView_point.setId(View.generateViewId());
             int imageView_point_id = mImageView_point.getId();
             imageView_point_list.add(imageView_point_id);
@@ -150,17 +169,16 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
             LinearLayout.LayoutParams lp_TextView = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 1.0f);
             lp_TextView.height = ViewGroup.LayoutParams.MATCH_PARENT;
             lp_TextView.width = ViewGroup.LayoutParams.MATCH_PARENT;
-//            mTextView_stop.setText(stops.getStopName());
             mTextView_stop.setText(stops.getRouteStop().getStopName());
             mTextView_stop.setTextColor(getResources().getColor(R.color.black));
             //设置离我最近的站点为橘色
-            if (stops.getRouteStop().getStopName().contains(nextBuses.getStopName())){
+            if (stops.getRouteStop().getStopName().contains(nextBuses.getStopName())) {
                 isNear = true;
                 mTextView_stop.setTextColor(getResources().getColor(R.color.orange));
                 mImageView_point.setImageResource(R.drawable.stop_select);
             }
             mTextView_stop.setTextSize(20);
-            mTextView_stop.setPadding(dp_10,dp_10,dp_10,dp_10);
+            mTextView_stop.setPadding(dp_10, dp_10, dp_10, dp_10);
             mTextView_stop.setId(View.generateViewId());
             mTextView_stop.setOnClickListener(this);
             int textView_id = mTextView_stop.getId();
@@ -172,7 +190,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
             ViewGroup.LayoutParams lp_ImageView_bus = imageView_small_bus.getLayoutParams();
             lp_ImageView_bus.width = ViewGroup.LayoutParams.WRAP_CONTENT;
             lp_ImageView_bus.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-            imageView_small_bus.setPadding(dp_10,dp_10,dp_10,dp_10);
+            imageView_small_bus.setPadding(dp_10, dp_10, dp_10, dp_10);
             imageView_small_bus.setId(View.generateViewId());
             int imageView_bus_id = imageView_small_bus.getId();
             imageView_bus_list.add(imageView_bus_id);
@@ -180,41 +198,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
 
         }
 
-
- //        if (isNear){
-//            //有查找到附近站点才启用本功能
-//            //1 得到高亮站点的索引 2 得到高亮站点上一辆公交的索引与信息 stop.seqNo-1 为高亮站点的索引
-//            if (indexList.size() != 0) {//得有公交车 才能获取
-//                Integer last_bus_index = indexList.get(indexList.size() - 1); //得到 stopList中公交车所在的索引 (高亮站点的上一辆索引)
-//                int n = 2;
-//                while (last_bus_index >= stop_index) {
-//                    if ((indexList.size() - n >= 0)) {
-//                        last_bus_index = indexList.get(indexList.size() - n);
-//                    } else {
-//                        break;
-//                    }
-//                    n++;
-//                }
-//                Stops stops = stopsList.get(last_bus_index);//得到有公交车的站点信息
-//                List<Buses> buses = stops.getBuses();//得到公交车信息
-//                int nextDistance = buses.get(0).getNextDistance();//距离下一站多少米
-//                int targetSeconds = buses.get(0).getTargetSeconds();//到达下一站需要多少秒
-//                int last_stop = stop_index - (stops.getSeqNo() - 1);//距离几个站
-//                System.out.println("stop_index = " + stop_index);
-//                System.out.println("站点名 = " + stops.getStopName());
-//                System.out.println("站点seqNo = " + stops.getSeqNo());
-//                System.out.println("距离几站 = " + last_stop);
-//                System.out.println("距离 = " + nextDistance); //不好做
-//                System.out.println("时间 = " + targetSeconds); //不好做 需要遍历叠加
-//                isNear = false;
-//            }
-//            else {
-//                System.out.println("等待发车");
-//            }
-//        }
-
-
-        //将所有即将到来的公交设置UI (小公交UI)
+        //设置站点小公交UI图片
         for (Integer integer : indexList) {
             ImageView small_bus = findViewById(imageView_bus_list.get(integer));
             small_bus.setImageResource(R.drawable.small_bus);
@@ -224,7 +208,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
 
         //设置起点和终点的UI
         Integer start_id = imageView_point_list.get(0);
-        Integer end_id = imageView_point_list.get(imageView_point_list.size()-1);
+        Integer end_id = imageView_point_list.get(imageView_point_list.size() - 1);
         ImageView start_img = findViewById(start_id);
         ImageView end_img = findViewById(end_id);
         start_img.setImageResource(R.drawable.bus_start);
@@ -236,11 +220,11 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     }
 
 
-    private Map<String,Integer> targetIdMap = new HashMap<>();
+    private Map<String, Integer> targetIdMap = new HashMap<>();
 
     /**
-     * @description 更新距离几站UI
      * @param buses
+     * @description 更新距离几站UI
      */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void flushTargetInfo(List<Buses> buses) {
@@ -248,7 +232,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
         LinearLayout bus_info_target = findViewById(R.id.bus_info_target);
         int n = 0;
 
-        if (buses.size() == 0){
+        if (buses.size() == 0) {
             //等待发车
             LinearLayout Linear_target = new LinearLayout(getApplicationContext());
             TextView textView_target = new TextView(getApplicationContext());
@@ -262,8 +246,8 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
             textView_target.setTextColor(getResources().getColor(R.color.black));
             textView_target.setGravity(Gravity.CENTER);
             textView_target.setTextSize(25);
-            int dp_15 = DensityUtil.dip2px(getApplicationContext(),15);
-            textView_target.setPadding(dp_15,dp_15,dp_15,dp_15);
+            int dp_15 = DensityUtil.dip2px(getApplicationContext(), 15);
+            textView_target.setPadding(dp_15, dp_15, dp_15, dp_15);
             textView_target.setBackgroundColor(getResources().getColor(R.color.white));
             textView_target.setLayoutParams(lp_textView_target);
             return;
@@ -294,9 +278,9 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
             LinearLayout.LayoutParams lp_LinearLayout_target = new LinearLayout.LayoutParams(Linear_target.getLayoutParams());
             lp_LinearLayout_target.width = ViewGroup.LayoutParams.WRAP_CONTENT;
             lp_LinearLayout_target.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-            if (n == 0){
-                int dp_50 = DensityUtil.dip2px(getApplicationContext(),5);
-                Linear_target.setPadding(0,0,dp_50,0);
+            if (n == 0) {
+                int dp_50 = DensityUtil.dip2px(getApplicationContext(), 5);
+                Linear_target.setPadding(0, 0, dp_50, 0);
             }
             Linear_target.setOrientation(LinearLayout.VERTICAL);
             Linear_target.setLayoutParams(lp_LinearLayout_target);
@@ -306,16 +290,15 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
             lp_textView_target.width = ViewGroup.LayoutParams.MATCH_PARENT;
             lp_textView_target.height = ViewGroup.LayoutParams.MATCH_PARENT;
             textView_target.setId(View.generateViewId());
-            targetIdMap.put("target_text_count_"+n,textView_target.getId());
+            targetIdMap.put("target_text_count_" + n, textView_target.getId());
             textView_target.setTextSize(25);
             textView_target.setGravity(Gravity.CENTER);
             textView_target.setBackgroundColor(getResources().getColor(R.color.white));
             textView_target.setTextColor(getResources().getColor(R.color.black));
-            if (targetStopCount == 0){
+            if (targetStopCount == 0) {
                 textView_target.setText("即将到站");
                 textView_target.setTextColor(getResources().getColor(R.color.orange));
-            }
-            else {
+            } else {
                 textView_target.setText(targetStopCount + "站");
             }
             textView_target.setLayoutParams(lp_textView_target);
@@ -326,14 +309,14 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
             textView_target2.setTextSize(20);
             textView_target2.setGravity(Gravity.CENTER);
             textView_target2.setId(View.generateViewId());
-            targetIdMap.put("target_text_distance_"+n,textView_target2.getId());
+            targetIdMap.put("target_text_distance_" + n, textView_target2.getId());
             textView_target2.setBackgroundColor(getResources().getColor(R.color.white));
             textView_target2.setTextColor(getResources().getColor(R.color.black));
-            textView_target2.setText(TimeUtil.secToMin(targetSeconds) + "/" + targetDistance+"米");
+            textView_target2.setText(TimeUtil.secToMin(targetSeconds) + "/" + targetDistance + "米");
             textView_target2.setLayoutParams(lp_textView_target2);
 
             n++;
-            if(n >= 2){
+            if (n >= 2) {
                 break;
             }
         }
@@ -342,13 +325,13 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     /**
      * @description 更新实时公交信息
      */
-    public void updataBusListInfo(){
+    public void updataBusListInfo() {
         new Thread(new Runnable() {
             @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
             @Override
             public void run() {
                 try {
-                    String str_businfo = HttpUtil.httpGet(busApi);
+                    String str_businfo = HttpUtil.httpGet(forw_api);
                     busInfo = MAPPER.readValue(str_businfo, BusDomJson.class);
                     System.out.println(busApi);
 
@@ -363,21 +346,20 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
                             int n = 0;
                             for (Buses bus : buses) {
                                 System.out.println(bus.getNextStation());
-                                TextView t1 = findViewById(targetIdMap.get("target_text_count_"+n));
-                                TextView t2 = findViewById(targetIdMap.get("target_text_distance_"+n));
+                                TextView t1 = findViewById(targetIdMap.get("target_text_count_" + n));
+                                TextView t2 = findViewById(targetIdMap.get("target_text_distance_" + n));
                                 int targetDistance = bus.getTargetDistance();
                                 int targetStopCount = bus.getTargetStopCount();
                                 int targetSeconds = bus.getTargetSeconds();
-                                if (targetStopCount == 0){
+                                if (targetStopCount == 0) {
                                     t1.setText("即将到站");
                                     t1.setTextColor(getResources().getColor(R.color.orange));
-                                }
-                                else {
+                                } else {
                                     t1.setText(targetStopCount + "站");
                                 }
-                                t2.setText(TimeUtil.secToMin(targetSeconds) + "/" + targetDistance+"米");
+                                t2.setText(TimeUtil.secToMin(targetSeconds) + "/" + targetDistance + "米");
                                 n++;
-                                if (n == 2){
+                                if (n == 2) {
                                     break;
                                 }
 
@@ -385,7 +367,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
 
                             for (Stops stops : stopsList) {
                                 List<Buses> list = stops.getBuses();
-                                if (list != null && list.size() != 0){
+                                if (list != null && list.size() != 0) {
                                     indexList.add(stopsList.indexOf(stops)); //添加公交车在stopList中的索引值 到 indexList
                                 }
                             }
@@ -403,10 +385,9 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
                             }
 
 
-
                         }
                     });
-                    Log.d("updataBusListInfo","更新实时公交数据成功");
+                    Log.d("updataBusListInfo", "更新实时公交数据成功");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -417,6 +398,47 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     }
 
 
+    /**
+     * @description 反向列表
+     */
+    public void oppositeBusListInfo() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String opposite_bus_json_info = HttpUtil.httpGet(oppsite_api);
+                    BusDomJson busDomJson = MAPPER.readValue(opposite_bus_json_info, BusDomJson.class);
+                    final List<Stops> stops = busDomJson.getItems().get(0).getRoutes().get(0).getStops();
+                    //修改列表UI
+                    //1 修改站点名称
+                    // 难点 1 正向站点数 和反向站点数 不一样 不可以用list直接拿ID改UI
+                    // 思路 先设置所有UI 不可见 隐藏 View.GONE  再开始展示UI
+                    // 如果正向站点数 大于反向站点数 显示小的方向站点数的UI 若小于 将TextViewList扩容 再动态添加几个TextView 进去
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            //设置所有站点名UI 不可见 隐藏 View.GONE
+                            for (Integer integer : textView_list) {
+                                findViewById(integer).setVisibility(View.GONE);
+                            }
+                            //设置所有小公交UI 隐藏
+                            for (Integer integer : imageView_bus_list) {
+                                findViewById(integer).setVisibility(View.GONE);
+                            }
+
+
+                        }
+                    });
+
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -425,11 +447,12 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
         imageView_bus_list.clear();
         imageView_point_list.clear();
         textView_list.clear();
+        Log.d("clearLists", "清楚列表ID");
     }
 
     @Override
     public void onClick(View v) {
-        
+
 
         for (Integer integer : textView_list) {
             TextView no_select_view = findViewById(integer);
@@ -442,7 +465,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
         }
         //设置起点和终点的UI
         Integer start_id = imageView_point_list.get(0);
-        Integer end_id = imageView_point_list.get(imageView_point_list.size()-1);
+        Integer end_id = imageView_point_list.get(imageView_point_list.size() - 1);
         ImageView start_img = findViewById(start_id);
         ImageView end_img = findViewById(end_id);
         start_img.setImageResource(R.drawable.bus_start);
@@ -455,45 +478,6 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
         select_point_image.setImageResource(R.drawable.stop_select);
         TextView select_view = findViewById(v.getId());
         select_view.setTextColor(getResources().getColor(R.color.orange));
-
-
-
-
-
-
-//        //有查找到附近站点才启用本功能
-//        //1 得到高亮站点的索引 2 得到高亮站点上一辆公交的索引与信息 stop.seqNo-1 为高亮站点的索引
-//        Integer last_bus_index = indexList.get(indexList.size() - 1); //得到 stopList中公交车所在的索引 (高亮站点的上一辆索引)
-//        int n = 2;
-//        while (last_bus_index >= stop_index){
-//            if ((indexList.size() - n >= 0)){
-//                last_bus_index = indexList.get(indexList.size() - n);
-//            }
-//            else {
-//                break;
-//            }
-//            n++;
-//        }
-//        Stops stops = stopsList.get(last_bus_index);//得到有公交车的站点信息
-//        List<Buses> buses = stops.getBuses();//得到公交车信息
-//        int nextDistance = buses.get(0).getNextDistance();//距离下一站多少米
-//        int targetSeconds = buses.get(0).getTargetSeconds();//到达下一站需要多少秒
-//        int last_stop = stop_index - (stops.getSeqNo()-1);//距离几个站
-//
-//        if (last_stop >= 0) {
-//            System.out.println("stop_index = " + stop_index);
-//            System.out.println("站点名 = " + stops.getStopName());
-//            System.out.println("站点seqNo = " + stops.getSeqNo());
-//            System.out.println("距离几站 = " + last_stop);
-//            System.out.println("距离 = " + nextDistance); //不好做
-//            System.out.println("时间 = " + targetSeconds); //不好做 需要遍历叠加
-//            //方向 起点到终点  首班 末班
-//        }
-//        else {
-//            System.out.println("等待发车");
-//        }
-
-
 
 
     }

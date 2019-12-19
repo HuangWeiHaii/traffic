@@ -68,7 +68,7 @@ public class MainPageActivity extends AppCompatActivity {
     private String stopName; //路线名称
     private Long route_id;  //正向路线ID
     private Long oppsite_id; //反向路线ID
-    private String busApi; //实时公交API
+    private String[] busApi; //实时公交API
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,12 +80,6 @@ public class MainPageActivity extends AppCompatActivity {
         //更新 latlng 和 poiInfo 开启一条线程去执行 POI 搜索公交站
         updatePoiInfo();
         initViews();
-
-        //根据定位得到的站点名查询Stop_id
-//        getStopIdByStopName("农林大学");
-//        getRouteIdByRouteName("85路");
-//        busApi = getBusApi("85路", "农林大学");
-//        System.out.println(busApi);
 
     }
 
@@ -168,16 +162,16 @@ public class MainPageActivity extends AppCompatActivity {
     /**
      *
      * @param routeName
-     * @param stopName
      * @return 获取实时公交的接口url
      */
-    public String getBusApi(String routeName,String stopName){
+    public String[] getBusApi(String routeName){
         Long[] routeIds = getRouteIdByRouteName(routeName);
         Long routeId = routeIds[0];
-//        Long stopId = getStopIdByStopName(stopName);
-//        String busApi = "https://app.ibuscloud.com/v11/bus/getNextBusByRouteStopId?"+new BusApi(String.valueOf(routeId),String.valueOf(stopId)).toString();
-        String busApi = "https://app.ibuscloud.com/v11/bus/getBusPositionByRouteId?"+ new NewBusApi(String.valueOf(routeId),latLng).toString();
-        return busApi;
+        Long oppositeId = routeIds[1];
+        String forw_busApi = "https://app.ibuscloud.com/v11/bus/getBusPositionByRouteId?"+ new NewBusApi(String.valueOf(routeId),latLng).toString();
+        String oppo_busApi = "https://app.ibuscloud.com/v11/bus/getBusPositionByRouteId?"+ new NewBusApi(String.valueOf(oppositeId),latLng).toString();
+        return new String[]{forw_busApi,oppo_busApi};
+
     }
 
     private void initViews() {
@@ -222,7 +216,7 @@ public class MainPageActivity extends AppCompatActivity {
                                 //直接获取第一个 公交站点 (福建理工学校)
                                 stopName = StringUtils.removeEnd(poiInfo.getName(), "站");
                                 System.out.println(stopName);
-                                busApi = getBusApi(routeName,stopName);
+                                busApi = getBusApi(routeName);
                                 System.out.println(busApi);
                                 //通过调用接口得到实时公交数据再进行页面渲染
                                 Toast.makeText(MainPageActivity.this, poiInfo.getName(), Toast.LENGTH_SHORT).show();
@@ -248,7 +242,7 @@ public class MainPageActivity extends AppCompatActivity {
                         if (!isStopNearby){
                             Log.d("MainpageActivity","附近无该路线的公交站点");
                             //如果在附近没查询到指定路线的 附近站点
-                            String busApi = getBusApi(routeName, "农林大学");
+                            String[] busApi = getBusApi(routeName);
                             try {
                                 //不可在主线程中使用HTTP请求 只能在异步请求
                                 getDatasync(busApi);
@@ -393,14 +387,14 @@ public class MainPageActivity extends AppCompatActivity {
      * @param busApi 实时公交数据
      * @description 异步获取Json数据
      */
-    public void getDatasync(final String busApi) {
+    public void getDatasync(final String[] busApi) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     OkHttpClient client = new OkHttpClient();//创建OkHttpClient对象
                     Request request = new Request.Builder()
-                            .url(busApi)//请求接口。如果需要传参拼接到接口后面。
+                            .url(busApi[0])//请求接口。如果需要传参拼接到接口后面。
                             .build();//创建Request 对象
                     Response response = null;
 
