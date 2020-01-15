@@ -85,7 +85,7 @@ public class LocateUtil {
 
         @Override
         public void onReceiveLocation(BDLocation location) {
-
+            setBdLocation(location);
             latLng = new LatLng(location.getLatitude(), location.getLongitude());
             Log.d("百度地图定位application",latLng.toString());
         }
