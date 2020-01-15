@@ -4,6 +4,7 @@ import androidx.annotation.LongDef;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -54,13 +55,17 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     //高亮站点的索引
     private int stop_index = 0;
     private boolean isNear = false;//用来确认是否有附近站点
-
+    private boolean isForw = true;
     //构造一个 存储实时公交index的集合
     List<Integer> indexList = new ArrayList<>();
     //所有站点信息
     List<Stops> stopsList;
     private NextBuses nextBuses = null;
-
+    //这是车辆距离信息 layout
+    private LinearLayout bus_info_target;
+    private ImageView flush_img;
+    private ImageView bus_img_opposite;
+    private ImageView bus_img_map;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
@@ -72,6 +77,32 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
         busInfo = (BusDomJson) getIntent().getSerializableExtra("BUS_INFO");
         busApi = getIntent().getStringArrayExtra("BUS_API");
         now_stopName = getIntent().getStringExtra("BUS_STOPNAME");
+
+        flush_img = findViewById(R.id.bus_img_flush);
+        bus_img_opposite = findViewById(R.id.bus_img_opposite);
+        bus_img_map = findViewById(R.id.bus_img_map);
+        flush_img.setOnClickListener(v -> {
+            if (ButtonUtil.isFastDoubleClick()) {
+                return;
+            }
+            updataBusListInfo();
+        });
+
+        bus_img_opposite.setOnClickListener(v -> {
+            if (ButtonUtil.isFastDoubleClick()) {
+                return;
+            }
+            //反向
+            oppositeBusListInfo();
+        });
+        bus_img_map.setOnClickListener(v -> {
+            if (ButtonUtil.isFastDoubleClick()){
+                return;
+            }
+            //转跳到地图
+            toBusMapRouteActivity();
+        });
+
 
         forw_api = busApi[0];
         oppsite_api = busApi[1];
@@ -86,6 +117,12 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
 
     }
 
+    private void toBusMapRouteActivity() {
+        Intent intent = new Intent(this,MapActivity.class);
+        startActivity(intent);
+    }
+
+
     /**
      * @description 渲染实时公交信息 设置监听等等
      */
@@ -93,28 +130,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     public void getBusListUI(final BusDomJson busInfo) {
 
         bus_info_list = findViewById(R.id.bus_info_list);
-        ImageView flush_img = findViewById(R.id.bus_img_flush);
-        ImageView bus_img_opposite = findViewById(R.id.bus_img_opposite);
-        flush_img.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (ButtonUtil.isFastDoubleClick()) {
-                    return;
-                }
-                updataBusListInfo();
-            }
-        });
 
-        bus_img_opposite.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (ButtonUtil.isFastDoubleClick()) {
-                    return;
-                }
-                //反向
-                oppositeBusListInfo();
-            }
-        });
 
         stopsList = busInfo.getItems().get(0).getRoutes().get(0).getStops();
 
@@ -229,7 +245,9 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void flushTargetInfo(List<Buses> buses) {
 
-        LinearLayout bus_info_target = findViewById(R.id.bus_info_target);
+
+        //
+        bus_info_target = findViewById(R.id.bus_info_target);
         int n = 0;
 
         if (buses.size() == 0) {
@@ -331,7 +349,12 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
             @Override
             public void run() {
                 try {
-                    String str_businfo = HttpUtil.httpGet(forw_api);
+                    String str_businfo;
+                    if (isForw) {
+                        str_businfo = HttpUtil.httpGet(forw_api);
+                    }else {
+                        str_businfo = HttpUtil.httpGet(oppsite_api);
+                    }
                     busInfo = MAPPER.readValue(str_businfo, BusDomJson.class);
                     System.out.println(busApi);
 
@@ -393,10 +416,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
                 }
             }
         }).start();
-
-
     }
-
 
     /**
      * @description 反向列表
@@ -406,30 +426,54 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
             @Override
             public void run() {
                 try {
-                    String opposite_bus_json_info = HttpUtil.httpGet(oppsite_api);
-                    BusDomJson busDomJson = MAPPER.readValue(opposite_bus_json_info, BusDomJson.class);
-                    final List<Stops> stops = busDomJson.getItems().get(0).getRoutes().get(0).getStops();
+                    String opposite_bus_json_info = "";
+                    if (isForw){
+                        opposite_bus_json_info = HttpUtil.httpGet(oppsite_api);
+                        isForw = !isForw;
+                    }
+                    else {
+                        opposite_bus_json_info = HttpUtil.httpGet(forw_api);
+                        isForw = !isForw;
+                    }
+                    busInfo = MAPPER.readValue(opposite_bus_json_info, BusDomJson.class);
+                    stopsList = busInfo.getItems().get(0).getRoutes().get(0).getStops();
                     //修改列表UI
                     //1 修改站点名称
                     // 难点 1 正向站点数 和反向站点数 不一样 不可以用list直接拿ID改UI
                     // 思路 先设置所有UI 不可见 隐藏 View.GONE  再开始展示UI
                     // 如果正向站点数 大于反向站点数 显示小的方向站点数的UI 若小于 将TextViewList扩容 再动态添加几个TextView 进去
                     runOnUiThread(new Runnable() {
+                        @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                         @Override
                         public void run() {
-                            //设置所有站点名UI 不可见 隐藏 View.GONE
+                          /*  //设置所有站点名UI 不可见 隐藏 View.GONE
                             for (Integer integer : textView_list) {
                                 findViewById(integer).setVisibility(View.GONE);
                             }
                             //设置所有小公交UI 隐藏
                             for (Integer integer : imageView_bus_list) {
                                 findViewById(integer).setVisibility(View.GONE);
-                            }
+                            }*/
+                            //设置所有视图 隐藏
+                           /* for (Integer integer : linearLayout_list) {
+                                findViewById(integer).setVisibility(View.GONE);
+                            }*/
+                            //清空之前保留的ID信息
+                            imageView_bus_list.clear();
+                            imageView_point_list.clear();
+                            linearLayout_list.clear();
+                            textView_list.clear();
+                            indexList.clear();
+                            bus_info_target.removeAllViews();
+                            bus_info_list.removeAllViews();
+                            linearLayout_list.clear();
+                            //重新刷新公交列表UI
+                            getBusListUI(busInfo);
 
+                            //bus_info_list.setVisibility(View.GONE);
 
                         }
                     });
-
 
                 } catch (IOException e) {
                     e.printStackTrace();

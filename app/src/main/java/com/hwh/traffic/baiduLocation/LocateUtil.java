@@ -7,6 +7,8 @@ import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
+import com.baidu.mapapi.CoordType;
+import com.baidu.mapapi.SDKInitializer;
 import com.baidu.mapapi.model.LatLng;
 
 public class LocateUtil {
@@ -17,6 +19,12 @@ public class LocateUtil {
     public LocationListener myListener = new LocateUtil.LocationListener();
 
     public LocateUtil(Context context){
+
+        //在使用SDK各组件之前初始化context信息，传入ApplicationContext
+        SDKInitializer.initialize(context);
+        //自4.3.0起，百度地图SDK所有接口均支持百度坐标和国测局坐标，用此方法设置您使用的坐标类型.
+        //包括BD09LL和GCJ02两种坐标，默认是BD09LL坐标。
+        SDKInitializer.setCoordType(CoordType.GCJ02);
         // 开启定位图层
         mLocationClient = new LocationClient(context);     //声明LocationClient类
         //配置定位SDK参数
@@ -77,7 +85,7 @@ public class LocateUtil {
 
         @Override
         public void onReceiveLocation(BDLocation location) {
-
+            setBdLocation(location);
             latLng = new LatLng(location.getLatitude(), location.getLongitude());
             Log.d("百度地图定位application",latLng.toString());
         }
