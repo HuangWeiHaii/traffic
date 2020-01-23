@@ -159,6 +159,7 @@ public class MainPageActivity extends AppCompatActivity {
         }.start();
     }
 
+
     /**
      *
      * @param routeName
@@ -203,66 +204,84 @@ public class MainPageActivity extends AppCompatActivity {
 //                    updatePoiInfo();
                     routeName = StringUtils.trim(main_page_edit.getText().toString());
                     boolean isStopNearby = false;
-                    if (poiInfos != null) {
-                        //对POI公交信息进行遍历
-                        for (PoiInfo poiInfo : poiInfos) {
-                            System.out.println(poiInfo.getAddress());
-                            System.out.println(poiInfo.getName());
-
-                            //获取 路线信息如(15路;22路;77路;85路;312路;329路)
-                            String routes = poiInfo.getAddress();
-                            if (routes.contains(main_page_edit.getText().toString())) {//85路
-                                isStopNearby = true;
-                                //直接获取第一个 公交站点 (福建理工学校)
-                                stopName = StringUtils.removeEnd(poiInfo.getName(), "站");
-                                System.out.println(stopName);
-                                busApi = getBusApi(routeName);
-                                System.out.println(busApi);
-                                //通过调用接口得到实时公交数据再进行页面渲染
-                                Toast.makeText(MainPageActivity.this, poiInfo.getName(), Toast.LENGTH_SHORT).show();
-                                try {
-                                    //不可在主线程中使用HTTP请求 只能在异步请求
-                                    getDatasync(busApi);
-                                    while (busDomJson == null) {
-                                        Thread.sleep(200);
-                                        Log.d("MainpageActivity","正在获取公交数据");
-                                    }
-                                    Log.d("MainpageActivity","获取成功");
-                                    Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
-                                    intent.putExtra("BUS_INFO", busDomJson);
-                                    intent.putExtra("BUS_API",busApi);
-                                    intent.putExtra("BUS_STOPNAME",stopName);
-                                    startActivity(intent);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                                break;
-                            }
+                    //if (poiInfos != null) {
+                    //    //对POI公交信息进行遍历
+                    //    for (PoiInfo poiInfo : poiInfos) {
+                    //        System.out.println(poiInfo.getAddress());
+                    //        System.out.println(poiInfo.getName());
+                    //
+                    //        //获取 路线信息如(15路;22路;77路;85路;312路;329路)
+                    //        String routes = poiInfo.getAddress();
+                    //        if (routes.contains(main_page_edit.getText().toString())) {//85路
+                    //            isStopNearby = true;
+                    //            //直接获取第一个 公交站点 (福建理工学校)
+                    //            stopName = StringUtils.removeEnd(poiInfo.getName(), "站");
+                    //            System.out.println(stopName);
+                    //            busApi = getBusApi(routeName);
+                    //            System.out.println(busApi);
+                    //            //通过调用接口得到实时公交数据再进行页面渲染
+                    //            Toast.makeText(MainPageActivity.this, poiInfo.getName(), Toast.LENGTH_SHORT).show();
+                    //            try {
+                    //                //不可在主线程中使用HTTP请求 只能在异步请求
+                    //                getDatasync(busApi);
+                    //                while (busDomJson == null) {
+                    //                    Thread.sleep(200);
+                    //                    Log.d("MainpageActivity","正在获取公交数据");
+                    //                }
+                    //                Log.d("MainpageActivity","获取成功");
+                    //                Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
+                    //                intent.putExtra("BUS_INFO", busDomJson);
+                    //                intent.putExtra("BUS_API",busApi);
+                    //                intent.putExtra("BUS_STOPNAME",stopName);
+                    //                startActivity(intent);
+                    //            } catch (Exception e) {
+                    //                e.printStackTrace();
+                    //            }
+                    //            break;
+                    //        }
+                    //    }
+                    //    if (!isStopNearby){
+                    //        Log.d("MainpageActivity","附近无该路线的公交站点");
+                    //        //如果在附近没查询到指定路线的 附近站点
+                    //        String[] busApi = getBusApi(routeName);
+                    //        try {
+                    //            //不可在主线程中使用HTTP请求 只能在异步请求
+                    //            getDatasync(busApi);
+                    //            while (busDomJson == null) {
+                    //                Thread.sleep(200);
+                    //                Log.d("MainpageActivity","正在获取公交数据");
+                    //            }
+                    //            Log.d("MainpageActivity","获取成功");
+                    //            Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
+                    //            intent.putExtra("BUS_INFO", busDomJson);
+                    //            intent.putExtra("BUS_API",busApi);
+                    //            intent.putExtra("BUS_STOPNAME","农林大学");
+                    //            startActivity(intent);
+                    //        } catch (Exception e) {
+                    //            e.printStackTrace();
+                    //        }
+                    //
+                    //    }
+                    //
+                    //}
+                    busApi = getBusApi(routeName);
+                    try {
+                        //不可在主线程中使用HTTP请求 只能在异步请求
+                        getDatasync(busApi);
+                        while (busDomJson == null) {
+                            Thread.sleep(200);
+                            Log.d("MainpageActivity","正在获取公交数据");
                         }
-                        if (!isStopNearby){
-                            Log.d("MainpageActivity","附近无该路线的公交站点");
-                            //如果在附近没查询到指定路线的 附近站点
-                            String[] busApi = getBusApi(routeName);
-                            try {
-                                //不可在主线程中使用HTTP请求 只能在异步请求
-                                getDatasync(busApi);
-                                while (busDomJson == null) {
-                                    Thread.sleep(200);
-                                    Log.d("MainpageActivity","正在获取公交数据");
-                                }
-                                Log.d("MainpageActivity","获取成功");
-                                Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
-                                intent.putExtra("BUS_INFO", busDomJson);
-                                intent.putExtra("BUS_API",busApi);
-                                intent.putExtra("BUS_STOPNAME","农林大学");
-                                startActivity(intent);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-
-                        }
-
+                        Log.d("MainpageActivity","获取成功");
+                        Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
+                        intent.putExtra("BUS_INFO", busDomJson);
+                        intent.putExtra("BUS_API",busApi);
+                        //intent.putExtra("BUS_STOPNAME",stopName);
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
+
                 }
             }
         });
