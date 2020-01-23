@@ -76,7 +76,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
 
         busInfo = (BusDomJson) getIntent().getSerializableExtra("BUS_INFO");
         busApi = getIntent().getStringArrayExtra("BUS_API");
-        now_stopName = getIntent().getStringExtra("BUS_STOPNAME");
+        //now_stopName = getIntent().getStringExtra("BUS_STOPNAME");
 
         flush_img = findViewById(R.id.bus_img_flush);
         bus_img_opposite = findViewById(R.id.bus_img_opposite);
@@ -110,7 +110,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
         System.out.println(busInfo);
         System.out.println("正向API = " + forw_api);
         System.out.println("反向API = " + oppsite_api);
-        System.out.println(now_stopName);
+        //System.out.println(now_stopName);
 
         //将实时公交信息渲染 并设置按钮监听
         getBusListUI(busInfo);
