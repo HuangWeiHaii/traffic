@@ -406,7 +406,6 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
             @Override
             public void run() {
                 try {
-                    
                     String opposite_bus_json_info = HttpUtil.httpGet(oppsite_api);
                     BusDomJson busDomJson = MAPPER.readValue(opposite_bus_json_info, BusDomJson.class);
                     final List<Stops> stops = busDomJson.getItems().get(0).getRoutes().get(0).getStops();

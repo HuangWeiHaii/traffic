@@ -28,7 +28,8 @@
             android:name=".activity.MainPageActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar"/>
 
-        <activity android:name=".activity.MapActivity"></activity>
+        <activity android:name=".activity.MapActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar"></activity>
 
         <activity
             android:name=".activity.WelcomeActivity"
@@ -43,7 +44,9 @@
 
         <meta-data
             android:name="com.baidu.lbsapi.API_KEY"
-            android:value="4XmZ02dQcSBCsbPZ0LVBpqyqf7TYfWZu" />
+            android:value="GoWWTQEGMkr7h8bgoh853FwPypIEFNiP"/>
+
+        <!--            android:value="4XmZ02dQcSBCsbPZ0LVBpqyqf7TYfWZu" -->
 
         <service
             android:name="com.baidu.location.f"
