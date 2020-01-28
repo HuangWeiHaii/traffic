@@ -15,17 +15,18 @@ import android.widget.Toast;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.search.core.PoiDetailInfo;
 import com.baidu.mapapi.search.core.PoiInfo;
+import com.baidu.mapapi.search.core.SearchResult;
 import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
+import com.baidu.mapapi.search.poi.PoiCitySearchOption;
 import com.baidu.mapapi.search.poi.PoiDetailResult;
 import com.baidu.mapapi.search.poi.PoiDetailSearchResult;
 import com.baidu.mapapi.search.poi.PoiIndoorResult;
-import com.baidu.mapapi.search.poi.PoiNearbySearchOption;
 import com.baidu.mapapi.search.poi.PoiResult;
 import com.baidu.mapapi.search.poi.PoiSearch;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwh.traffic.MapApplication;
-import com.hwh.traffic.BusApiEntity.NewBusApi;
+import com.hwh.traffic.busApiEntity.NewBusApi;
 import com.hwh.traffic.R;
 import com.hwh.traffic.db.TrafficLab;
 import com.hwh.traffic.busEntity.BusDomJson;
@@ -33,6 +34,7 @@ import com.hwh.traffic.utils.ButtonUtil;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -69,6 +71,8 @@ public class MainPageActivity extends AppCompatActivity {
     private Long route_id;  //正向路线ID
     private Long oppsite_id; //反向路线ID
     private String[] busApi; //实时公交API
+    private List<String> busUid = null;
+    private PoiSearch mPoiSearch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,13 +82,13 @@ public class MainPageActivity extends AppCompatActivity {
         mapApplication = (MapApplication) getApplication();
 
         //更新 latlng 和 poiInfo 开启一条线程去执行 POI 搜索公交站
-        updatePoiInfo();
         initViews();
+        updatePoiInfo("85");  //一个不理解的BUG 需要在onCreate方法中先更新一下百度地图的POI
+
 
     }
 
     /**
-     *
      * @param stopName 公交站点名称
      * @return 站点ID
      */
@@ -98,25 +102,24 @@ public class MainPageActivity extends AppCompatActivity {
     }
 
     /**
-     *
      * @param routeName 路线名称
-     * @return  路线的正向ID和反向ID
+     * @return 路线的正向ID和反向ID
      */
-    public Long[] getRouteIdByRouteName(String routeName){
+    public Long[] getRouteIdByRouteName(String routeName) {
         TrafficLab trafficLab = mapApplication.getTrafficLab();
-        if (trafficLab != null){
+        if (trafficLab != null) {
             Long[] routeIds = trafficLab.findRouteIdAndOppositeIdByRouteName(routeName);
             route_id = routeIds[0];
-            System.out.println("正向路线ID"+route_id);
+            System.out.println("正向路线ID" + route_id);
             oppsite_id = routeIds[1];
-            System.out.println("反向路线ID"+oppsite_id);
+            System.out.println("反向路线ID" + oppsite_id);
         }
-        return new Long[]{route_id,oppsite_id};
+        return new Long[]{route_id, oppsite_id};
 
     }
 
     //后期打算将这个函数放进Application中 进行定期更新
-    private void updatePoiInfo() {
+    private void updatePoiInfo(String routeName) {
         new Thread() {
             @Override
             public void run() {
@@ -134,7 +137,10 @@ public class MainPageActivity extends AppCompatActivity {
                     latLng = mapApplication.getLatLng();
                     if (latLng != null) {
                         //这个函数更新了poiInfo
-                        getStopInfoByLatLng(latLng);
+                        //getStopInfoByLatLng(latLng);
+                        if (!StringUtils.isEmpty(routeName)){
+                            getBusUidByRouteName(routeName);
+                        }
                         while (poiInfos == null) {
                             try {
                                 //poiInfos 在 getStopInfoByLatLng(latLng) 内赋值 需要等待POI搜索结果出来后在能结束
@@ -150,7 +156,7 @@ public class MainPageActivity extends AppCompatActivity {
                     try {
                         //每十秒更新一次
                         Thread.sleep(5000);
-                        Log.d("百度地图定位MainPage","更新latlng 与 poiInfo");
+                        Log.d("百度地图定位MainPage", "更新latlng 与 poiInfo");
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -161,17 +167,16 @@ public class MainPageActivity extends AppCompatActivity {
 
 
     /**
-     *
      * @param routeName
      * @return 获取实时公交的接口url
      */
-    public String[] getBusApi(String routeName){
+    public String[] getBusApi(String routeName) {
         Long[] routeIds = getRouteIdByRouteName(routeName);
         Long routeId = routeIds[0];
         Long oppositeId = routeIds[1];
-        String forw_busApi = "https://app.ibuscloud.com/v11/bus/getBusPositionByRouteId?"+ new NewBusApi(String.valueOf(routeId),latLng).toString();
-        String oppo_busApi = "https://app.ibuscloud.com/v11/bus/getBusPositionByRouteId?"+ new NewBusApi(String.valueOf(oppositeId),latLng).toString();
-        return new String[]{forw_busApi,oppo_busApi};
+        String forw_busApi = "https://app.ibuscloud.com/v11/bus/getBusPositionByRouteId?" + new NewBusApi(String.valueOf(routeId), latLng).toString();
+        String oppo_busApi = "https://app.ibuscloud.com/v11/bus/getBusPositionByRouteId?" + new NewBusApi(String.valueOf(oppositeId), latLng).toString();
+        return new String[]{forw_busApi, oppo_busApi};
 
     }
 
@@ -190,99 +195,111 @@ public class MainPageActivity extends AppCompatActivity {
         main_page_edit = findViewById(R.id.main_page_edit);
         main_page_search = findViewById(R.id.main_page_search);
 
-        main_page_search.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        main_page_search.setOnClickListener(v -> {
 
-                if (ButtonUtil.isFastDoubleClick()){
-                    return;
-                }
+            if (ButtonUtil.isFastDoubleClick()) {
+                return;
+            }
 
-                if (StringUtils.isEmpty(main_page_edit.getText().toString())) {
-                    Toast.makeText(MainPageActivity.this, "请输入路线", Toast.LENGTH_SHORT).show();
-                } else {
-//                    updatePoiInfo();
-                    routeName = StringUtils.trim(main_page_edit.getText().toString());
-                    boolean isStopNearby = false;
-                    //if (poiInfos != null) {
-                    //    //对POI公交信息进行遍历
-                    //    for (PoiInfo poiInfo : poiInfos) {
-                    //        System.out.println(poiInfo.getAddress());
-                    //        System.out.println(poiInfo.getName());
-                    //
-                    //        //获取 路线信息如(15路;22路;77路;85路;312路;329路)
-                    //        String routes = poiInfo.getAddress();
-                    //        if (routes.contains(main_page_edit.getText().toString())) {//85路
-                    //            isStopNearby = true;
-                    //            //直接获取第一个 公交站点 (福建理工学校)
-                    //            stopName = StringUtils.removeEnd(poiInfo.getName(), "站");
-                    //            System.out.println(stopName);
-                    //            busApi = getBusApi(routeName);
-                    //            System.out.println(busApi);
-                    //            //通过调用接口得到实时公交数据再进行页面渲染
-                    //            Toast.makeText(MainPageActivity.this, poiInfo.getName(), Toast.LENGTH_SHORT).show();
-                    //            try {
-                    //                //不可在主线程中使用HTTP请求 只能在异步请求
-                    //                getDatasync(busApi);
-                    //                while (busDomJson == null) {
-                    //                    Thread.sleep(200);
-                    //                    Log.d("MainpageActivity","正在获取公交数据");
-                    //                }
-                    //                Log.d("MainpageActivity","获取成功");
-                    //                Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
-                    //                intent.putExtra("BUS_INFO", busDomJson);
-                    //                intent.putExtra("BUS_API",busApi);
-                    //                intent.putExtra("BUS_STOPNAME",stopName);
-                    //                startActivity(intent);
-                    //            } catch (Exception e) {
-                    //                e.printStackTrace();
-                    //            }
-                    //            break;
-                    //        }
-                    //    }
-                    //    if (!isStopNearby){
-                    //        Log.d("MainpageActivity","附近无该路线的公交站点");
-                    //        //如果在附近没查询到指定路线的 附近站点
-                    //        String[] busApi = getBusApi(routeName);
-                    //        try {
-                    //            //不可在主线程中使用HTTP请求 只能在异步请求
-                    //            getDatasync(busApi);
-                    //            while (busDomJson == null) {
-                    //                Thread.sleep(200);
-                    //                Log.d("MainpageActivity","正在获取公交数据");
-                    //            }
-                    //            Log.d("MainpageActivity","获取成功");
-                    //            Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
-                    //            intent.putExtra("BUS_INFO", busDomJson);
-                    //            intent.putExtra("BUS_API",busApi);
-                    //            intent.putExtra("BUS_STOPNAME","农林大学");
-                    //            startActivity(intent);
-                    //        } catch (Exception e) {
-                    //            e.printStackTrace();
-                    //        }
-                    //
-                    //    }
-                    //
-                    //}
-                    busApi = getBusApi(routeName);
+            if (StringUtils.isEmpty(main_page_edit.getText().toString())) {
+                Toast.makeText(MainPageActivity.this, "请输入路线", Toast.LENGTH_SHORT).show();
+            } else {
+                //updatePoiInfo();
+
+                routeName = StringUtils.trim(main_page_edit.getText().toString());
+
+                //if (poiInfos != null) {
+                //    //对POI公交信息进行遍历
+                //    for (PoiInfo poiInfo : poiInfos) {
+                //        System.out.println(poiInfo.getAddress());
+                //        System.out.println(poiInfo.getName());
+                //
+                //        //获取 路线信息如(15路;22路;77路;85路;312路;329路)
+                //        String routes = poiInfo.getAddress();
+                //        if (routes.contains(main_page_edit.getText().toString())) {//85路
+                //            isStopNearby = true;
+                //            //直接获取第一个 公交站点 (福建理工学校)
+                //            stopName = StringUtils.removeEnd(poiInfo.getName(), "站");
+                //            System.out.println(stopName);
+                //            busApi = getBusApi(routeName);
+                //            System.out.println(busApi);
+                //            //通过调用接口得到实时公交数据再进行页面渲染
+                //            Toast.makeText(MainPageActivity.this, poiInfo.getName(), Toast.LENGTH_SHORT).show();
+                //            try {
+                //                //不可在主线程中使用HTTP请求 只能在异步请求
+                //                getDatasync(busApi);
+                //                while (busDomJson == null) {
+                //                    Thread.sleep(200);
+                //                    Log.d("MainpageActivity","正在获取公交数据");
+                //                }
+                //                Log.d("MainpageActivity","获取成功");
+                //                Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
+                //                intent.putExtra("BUS_INFO", busDomJson);
+                //                intent.putExtra("BUS_API",busApi);
+                //                intent.putExtra("BUS_STOPNAME",stopName);
+                //                startActivity(intent);
+                //            } catch (Exception e) {
+                //                e.printStackTrace();
+                //            }
+                //            break;
+                //        }
+                //    }
+                //    if (!isStopNearby){
+                //        Log.d("MainpageActivity","附近无该路线的公交站点");
+                //        //如果在附近没查询到指定路线的 附近站点
+                //        String[] busApi = getBusApi(routeName);
+                //        try {
+                //            //不可在主线程中使用HTTP请求 只能在异步请求
+                //            getDatasync(busApi);
+                //            while (busDomJson == null) {
+                //                Thread.sleep(200);
+                //                Log.d("MainpageActivity","正在获取公交数据");
+                //            }
+                //            Log.d("MainpageActivity","获取成功");
+                //            Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
+                //            intent.putExtra("BUS_INFO", busDomJson);
+                //            intent.putExtra("BUS_API",busApi);
+                //            intent.putExtra("BUS_STOPNAME","农林大学");
+                //            startActivity(intent);
+                //        } catch (Exception e) {
+                //            e.printStackTrace();
+                //        }
+                //
+                //    }
+                //
+                //}
+                busApi = getBusApi(routeName);
+                getBusUidByRouteName(routeName);
+                //updatePoiInfo(routeName);
+
+                while (busUid== null){
                     try {
-                        //不可在主线程中使用HTTP请求 只能在异步请求
-                        getDatasync(busApi);
-                        while (busDomJson == null) {
-                            Thread.sleep(200);
-                            Log.d("MainpageActivity","正在获取公交数据");
-                        }
-                        Log.d("MainpageActivity","获取成功");
-                        Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
-                        intent.putExtra("BUS_INFO", busDomJson);
-                        intent.putExtra("BUS_API",busApi);
-                        //intent.putExtra("BUS_STOPNAME",stopName);
-                        startActivity(intent);
-                    } catch (Exception e) {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-
                 }
+                String[] busUids = new String[]{busUid.get(0), busUid.get(1)};
+
+                try {
+                    //不可在主线程中使用HTTP请求 只能在异步请求
+                    getDatasync(busApi);
+                    while (busDomJson == null) {
+                        Thread.sleep(200);
+                        Log.d("MainpageActivity", "正在获取公交数据");
+                    }
+                    Log.d("MainpageActivity", "获取成功");
+                    Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
+                    intent.putExtra("BUS_INFO", busDomJson);
+                    intent.putExtra("BUS_API", busApi);
+                    intent.putExtra("BUS_UID", busUids);
+
+                    //intent.putExtra("BUS_STOPNAME",stopName);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
             }
         });
 
@@ -389,18 +406,69 @@ public class MainPageActivity extends AppCompatActivity {
 
             }
         });
-        mPoiSearch.searchNearby(new PoiNearbySearchOption()
+      /*  mPoiSearch.searchNearby(new PoiNearbySearchOption()
                 .radius(2000)
                 .location(latLng)
                 .keyword("公交")
                 .scope(2)
                 .pageCapacity(20)
                 .radiusLimit(true)
-        );
+        );*/
 
+        mPoiSearch.searchInCity(new PoiCitySearchOption().city("福州").keyword("85"));
 
 
     }
+
+    public void getBusUidByRouteName(String routeName) {
+
+        mPoiSearch = PoiSearch.newInstance();
+        mPoiSearch.setOnGetPoiSearchResultListener(new OnGetPoiSearchResultListener() {
+            @Override
+            public void onGetPoiResult(PoiResult result) {
+                if (result == null || result.error != SearchResult.ERRORNO.NO_ERROR) {
+                    System.out.println("error");
+                    return;
+                }
+                busUid = new ArrayList<>();
+                for (PoiInfo poi : result.getAllPoi()) {
+                    System.out.println(" uid = " + poi.uid);
+                    busUid.add(poi.uid);
+                }
+
+            }
+
+            @Override
+            public void onGetPoiDetailResult(PoiDetailResult poiDetailResult) {
+
+            }
+
+            @Override
+            public void onGetPoiDetailResult(PoiDetailSearchResult poiDetailSearchResult) {
+
+            }
+
+            @Override
+            public void onGetPoiIndoorResult(PoiIndoorResult poiIndoorResult) {
+
+            }
+        });
+
+        System.out.println(routeName);
+        mPoiSearch.searchInCity(new PoiCitySearchOption().city("福州").keyword(routeName + "公交"));
+        System.out.println("开始搜索");
+
+        while (busUid== null) {
+            try {
+                Thread.sleep(200);
+                System.out.println("正在搜索" + routeName);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
 
     /**
      * @param busApi 实时公交数据

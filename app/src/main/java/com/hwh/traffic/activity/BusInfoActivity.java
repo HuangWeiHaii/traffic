@@ -12,6 +12,13 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.baidu.mapapi.search.busline.BusLineResult;
+import com.baidu.mapapi.search.busline.BusLineSearch;
+import com.baidu.mapapi.search.busline.BusLineSearchOption;
+import com.baidu.mapapi.search.busline.OnGetBusLineSearchResultListener;
+import com.baidu.mapapi.search.core.SearchResult;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwh.traffic.R;
@@ -44,6 +51,9 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     private String now_stopName;
     private String oppsite_api;
     private String forw_api;
+    private String forw_uid;
+    private String oppsite_uid;
+
     //高亮站点的索引
     private int stop_index = 0;
     private boolean isNear = false;//用来确认是否有附近站点
@@ -58,6 +68,10 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     private ImageView flush_img;
     private ImageView bus_img_opposite;
     private ImageView bus_img_map;
+    private String[] bus_uid = null;
+    private BusLineSearch busLineSearch;
+    private String now_bus_uid;
+    private BusLineResult bus_line_result;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
@@ -66,9 +80,39 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
         setContentView(R.layout.activity_bus_info);
 
 
+
         busInfo = (BusDomJson) getIntent().getSerializableExtra("BUS_INFO");
         busApi = getIntent().getStringArrayExtra("BUS_API");
-        //now_stopName = getIntent().getStringExtra("BUS_STOPNAME");
+        bus_uid = getIntent().getStringArrayExtra("BUS_UID");
+        busLineSearch = BusLineSearch.newInstance();
+
+        //确认公交POI UID 的正确方向
+        busLineSearch.setOnGetBusLineSearchResultListener(new OnGetBusLineSearchResultListener() {
+            @Override
+            public void onGetBusLineResult(BusLineResult result) {
+                if (result == null || result.error != SearchResult.ERRORNO.NO_ERROR) {
+                    return;
+                }
+                bus_line_result = result;
+                if (busInfo.getItems().get(0).getRoutes().get(0).getStops().get(0).getRouteStop().getStopName().contains(result.getStations().get(0).getTitle())) {
+                    forw_uid = bus_uid[0];
+                    oppsite_uid = bus_uid[1];
+                    now_bus_uid = forw_uid;
+                    System.out.println("正向 UID" + forw_uid);
+                    System.out.println("反向 UID" + oppsite_uid);
+                } else {
+                    forw_uid = bus_uid[1];
+                    oppsite_uid = bus_uid[0];
+                    now_bus_uid = forw_uid;
+                    System.out.println("正向 UID" + forw_uid);
+                    System.out.println("反向 UID" + oppsite_uid);
+                }
+
+            }
+        });
+        busLineSearch.searchBusLine((new BusLineSearchOption()
+                .city("福州") // 设置查询城市
+                .uid(bus_uid[0])));// 设置公交路线uid
 
         flush_img = findViewById(R.id.bus_img_flush);
         bus_img_opposite = findViewById(R.id.bus_img_opposite);
@@ -111,7 +155,12 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
 
     private void toBusMapRouteActivity() {
         Intent intent = new Intent(this, MapActivity.class);
-        startActivity(intent);
+        if (bus_line_result != null){
+
+            intent.putExtra("BUS_LINE_UID",now_bus_uid);
+            startActivity(intent);
+        }
+
     }
 
 
@@ -121,8 +170,9 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void getBusListUI(final BusDomJson busInfo) {
 
-        bus_info_list = findViewById(R.id.bus_info_list);
 
+
+        bus_info_list = findViewById(R.id.bus_info_list);
 
         stopsList = busInfo.getItems().get(0).getRoutes().get(0).getStops();
 
@@ -420,12 +470,16 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
                 try {
                     String opposite_bus_json_info = "";
                     if (isForw){
+                        now_bus_uid = forw_uid;
                         opposite_bus_json_info = HttpUtil.httpGet(oppsite_api);
                         isForw = !isForw;
+                        System.out.println("点击反向后UID"+now_bus_uid);
                     }
                     else {
+                        now_bus_uid = oppsite_uid;
                         opposite_bus_json_info = HttpUtil.httpGet(forw_api);
                         isForw = !isForw;
+                        System.out.println("点击反向后UID"+now_bus_uid);
                     }
                     busInfo = MAPPER.readValue(opposite_bus_json_info, BusDomJson.class);
                     stopsList = busInfo.getItems().get(0).getRoutes().get(0).getStops();

@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,8 +20,17 @@ import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
+import com.baidu.mapapi.search.busline.BusLineResult;
+import com.baidu.mapapi.search.busline.BusLineSearch;
+import com.baidu.mapapi.search.busline.BusLineSearchOption;
+import com.baidu.mapapi.search.busline.OnGetBusLineSearchResultListener;
+import com.baidu.mapapi.search.core.SearchResult;
+import com.baidu.mapapi.search.poi.PoiSearch;
 import com.hwh.traffic.MapApplication;
 import com.hwh.traffic.R;
+import com.hwh.traffic.utils.BusLineOverlay;
+
+import java.util.List;
 
 
 /**
@@ -39,6 +49,22 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
     private LatLng latLng;
     private boolean isFirstLoc = true; // 是否首次定位
     private MapApplication mapApplication;
+    private BusLineSearch busLineSearch;
+
+
+    private Button mPreviousBtn = null; // 上一个节点
+    private Button mNextBtn = null; // 下一个节点
+    private BusLineResult mBusLineResult = null; // 保存驾车/步行路线数据的变量，供浏览节点时使用
+    private List<String> mBusLineIDList = null;
+    private int mBusLineIndex = 0;
+    // 搜索相关
+    private PoiSearch mSearch = null; // 搜索模块，也可去掉地图模块独立使用
+    private BusLineSearch mBusLineSearch = null;
+
+
+    private BusLineOverlay mBusLineOverlay; // 公交路线绘制对象
+    private EditText mEditCity;
+    private EditText mEditSearchKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +73,32 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         setContentView(R.layout.activity_map);
         initView();
         initMap();
+
+        mBusLineOverlay = new BusLineOverlay(mBaiduMap);
+
+        String bus_line_uid = getIntent().getStringExtra("BUS_LINE_UID");
+        System.out.println("map --------"+bus_line_uid);
+        busLineSearch = BusLineSearch.newInstance();
+
+        //确认公交POI UID 的正确方向
+        busLineSearch.setOnGetBusLineSearchResultListener(new OnGetBusLineSearchResultListener() {
+            @Override
+            public void onGetBusLineResult(BusLineResult result) {
+                if (result == null || result.error != SearchResult.ERRORNO.NO_ERROR) {
+                    return;
+                }
+                mBaiduMap.clear();
+                mBusLineResult = result;
+                mBusLineOverlay.removeFromMap();
+                mBusLineOverlay.setData(result);
+                mBusLineOverlay.addToMap();
+                mBusLineOverlay.zoomToSpan();
+
+            }
+        });
+        busLineSearch.searchBusLine((new BusLineSearchOption()
+                .city("福州") // 设置查询城市
+                .uid(bus_line_uid)));// 设置公交路线uid
 
     }
 

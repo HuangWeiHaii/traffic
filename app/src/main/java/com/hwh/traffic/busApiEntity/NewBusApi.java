@@ -1,4 +1,4 @@
-package com.hwh.traffic.BusApiEntity;
+package com.hwh.traffic.busApiEntity;
 
 import com.baidu.mapapi.model.LatLng;
 
