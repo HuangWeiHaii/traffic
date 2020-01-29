@@ -18,7 +18,15 @@ import com.baidu.mapapi.search.busline.BusLineResult;
 import com.baidu.mapapi.search.busline.BusLineSearch;
 import com.baidu.mapapi.search.busline.BusLineSearchOption;
 import com.baidu.mapapi.search.busline.OnGetBusLineSearchResultListener;
+import com.baidu.mapapi.search.core.PoiInfo;
 import com.baidu.mapapi.search.core.SearchResult;
+import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
+import com.baidu.mapapi.search.poi.PoiCitySearchOption;
+import com.baidu.mapapi.search.poi.PoiDetailResult;
+import com.baidu.mapapi.search.poi.PoiDetailSearchResult;
+import com.baidu.mapapi.search.poi.PoiIndoorResult;
+import com.baidu.mapapi.search.poi.PoiResult;
+import com.baidu.mapapi.search.poi.PoiSearch;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwh.traffic.R;
@@ -72,6 +80,66 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     private BusLineSearch busLineSearch;
     private String now_bus_uid;
     private BusLineResult bus_line_result;
+    private ArrayList<String> busUid;
+    private PoiSearch mPoiSearch;
+    private String now_bus_api;
+
+    public void getBusUidByRouteName(String routeName) {
+        new Thread(()->{
+            busUid = new ArrayList<>();
+            mPoiSearch = PoiSearch.newInstance();
+            mPoiSearch.setOnGetPoiSearchResultListener(new OnGetPoiSearchResultListener() {
+
+                @Override
+                public void onGetPoiResult(PoiResult result) {
+                    if (result == null || result.error != SearchResult.ERRORNO.NO_ERROR) {
+                        System.out.println("error");
+                        return;
+                    }
+                    for (PoiInfo poi : result.getAllPoi()) {
+                        System.out.println(" uid = " + poi.uid);
+                        busUid.add(poi.uid);
+                    }
+
+                }
+
+                @Override
+                public void onGetPoiDetailResult(PoiDetailResult poiDetailResult) {
+
+                }
+
+                @Override
+                public void onGetPoiDetailResult(PoiDetailSearchResult poiDetailSearchResult) {
+
+                }
+
+                @Override
+                public void onGetPoiIndoorResult(PoiIndoorResult poiIndoorResult) {
+
+                }
+            });
+            System.out.println(routeName);
+            mPoiSearch.searchInCity(new PoiCitySearchOption().city("福州").keyword(routeName + "公交"));
+            System.out.println("开始搜索");
+
+            while (busUid.size() == 0){
+                try {
+                    Thread.sleep(200);
+                    System.out.println("正在搜索" + routeName);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            bus_uid = new String[]{busUid.get(0),busUid.get(1)};
+            getBusForw();
+        }).start();
+
+
+
+
+
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
@@ -83,36 +151,12 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
 
         busInfo = (BusDomJson) getIntent().getSerializableExtra("BUS_INFO");
         busApi = getIntent().getStringArrayExtra("BUS_API");
-        bus_uid = getIntent().getStringArrayExtra("BUS_UID");
-        busLineSearch = BusLineSearch.newInstance();
+        String route_name = getIntent().getStringExtra("ROUTE_NAME");
+        getBusUidByRouteName(route_name);
+        //bus_uid = getIntent().getStringArrayExtra("BUS_UID");
+
 
         //确认公交POI UID 的正确方向
-        busLineSearch.setOnGetBusLineSearchResultListener(new OnGetBusLineSearchResultListener() {
-            @Override
-            public void onGetBusLineResult(BusLineResult result) {
-                if (result == null || result.error != SearchResult.ERRORNO.NO_ERROR) {
-                    return;
-                }
-                bus_line_result = result;
-                if (busInfo.getItems().get(0).getRoutes().get(0).getStops().get(0).getRouteStop().getStopName().contains(result.getStations().get(0).getTitle())) {
-                    forw_uid = bus_uid[0];
-                    oppsite_uid = bus_uid[1];
-                    now_bus_uid = forw_uid;
-                    System.out.println("正向 UID" + forw_uid);
-                    System.out.println("反向 UID" + oppsite_uid);
-                } else {
-                    forw_uid = bus_uid[1];
-                    oppsite_uid = bus_uid[0];
-                    now_bus_uid = forw_uid;
-                    System.out.println("正向 UID" + forw_uid);
-                    System.out.println("反向 UID" + oppsite_uid);
-                }
-
-            }
-        });
-        busLineSearch.searchBusLine((new BusLineSearchOption()
-                .city("福州") // 设置查询城市
-                .uid(bus_uid[0])));// 设置公交路线uid
 
         flush_img = findViewById(R.id.bus_img_flush);
         bus_img_opposite = findViewById(R.id.bus_img_opposite);
@@ -141,6 +185,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
 
 
         forw_api = busApi[0];
+        now_bus_api = forw_api;
         oppsite_api = busApi[1];
 
         System.out.println(busInfo);
@@ -153,11 +198,42 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
 
     }
 
+    private void getBusForw() {
+        busLineSearch = BusLineSearch.newInstance();
+        busLineSearch.setOnGetBusLineSearchResultListener(new OnGetBusLineSearchResultListener() {
+            @Override
+            public void onGetBusLineResult(BusLineResult result) {
+                if (result == null || result.error != SearchResult.ERRORNO.NO_ERROR) {
+                    return;
+                }
+                bus_line_result = result;
+                if (busInfo.getItems().get(0).getRoutes().get(0).getStops().get(0).getRouteStop().getStopName().contains(result.getStations().get(0).getTitle())) {
+                    forw_uid = bus_uid[0];
+                    oppsite_uid = bus_uid[1];
+                    now_bus_uid = forw_uid;
+                    System.out.println("正向 UID" + forw_uid);
+                    System.out.println("反向 UID" + oppsite_uid);
+                } else {
+                    forw_uid = bus_uid[1];
+                    oppsite_uid = bus_uid[0];
+                    now_bus_uid = forw_uid;
+                    System.out.println("正向 UID" + forw_uid);
+                    System.out.println("反向 UID" + oppsite_uid);
+                }
+
+            }
+        });
+        busLineSearch.searchBusLine((new BusLineSearchOption()
+                .city("福州") // 设置查询城市
+                .uid(bus_uid[0])));// 设置公交路线uid
+    }
+
     private void toBusMapRouteActivity() {
         Intent intent = new Intent(this, MapActivity.class);
         if (bus_line_result != null){
-
             intent.putExtra("BUS_LINE_UID",now_bus_uid);
+            intent.putExtra("BUS_NEXT",nextBuses.getStopName());
+            intent.putExtra("BUS_API",now_bus_api);
             startActivity(intent);
         }
 
@@ -471,12 +547,14 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
                     String opposite_bus_json_info = "";
                     if (isForw){
                         now_bus_uid = forw_uid;
+                        now_bus_api = oppsite_api;
                         opposite_bus_json_info = HttpUtil.httpGet(oppsite_api);
                         isForw = !isForw;
                         System.out.println("点击反向后UID"+now_bus_uid);
                     }
                     else {
                         now_bus_uid = oppsite_uid;
+                        now_bus_api = forw_api;
                         opposite_bus_json_info = HttpUtil.httpGet(forw_api);
                         isForw = !isForw;
                         System.out.println("点击反向后UID"+now_bus_uid);
@@ -534,7 +612,7 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
         super.onPause();
         //返回的时候需要clear 列表
         linearLayout_list.clear();
-        imageView_bus_list.clear();
+        //imageView_bus_list.clear();
         imageView_point_list.clear();
         textView_list.clear();
         Log.d("clearLists", "清楚列表ID");

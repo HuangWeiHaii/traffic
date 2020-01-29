@@ -1,6 +1,7 @@
 package com.hwh.traffic;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.baidu.location.BDLocation;
 import com.baidu.mapapi.CoordType;
@@ -35,6 +36,7 @@ public class MapApplication extends Application {
     }
 
     public LatLng getLatLng() {
+        Log.e("Application","获取定位 "+locateUtil.getLatLng().toString());
         return locateUtil.getLatLng();
     }
 

@@ -1,13 +1,24 @@
 package com.hwh.traffic.utils;
 
+import android.content.Context;
+
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BaiduMap.OnPolylineClickListener;
+import com.baidu.mapapi.map.BitmapDescriptor;
+import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.Marker;
+import com.baidu.mapapi.map.MarkerOptions;
 import com.baidu.mapapi.map.Overlay;
 import com.baidu.mapapi.map.OverlayOptions;
+import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.model.LatLngBounds;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hwh.traffic.busEntity.BusDomJson;
+import com.hwh.traffic.busEntity.Buses;
+import com.hwh.traffic.busEntity.NextBuses;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,16 +42,22 @@ public abstract class OverlayManager implements OnMarkerClickListener, OnPolylin
 
     BaiduMap mBaiduMap = null;
     private List<OverlayOptions> mOverlayOptionList = null;
+    private static ObjectMapper MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     List<Overlay> mOverlayList = null;
+    String neary_stop = null;
+    private BusDomJson busInfo;
+    private NextBuses nextBuses;
+    private List<OverlayOptions> bus_option = new ArrayList<>();
 
     /**
      * 通过一个BaiduMap 对象构造
      *
      * @param baiduMap
      */
-    public OverlayManager(BaiduMap baiduMap) {
+    public OverlayManager(BaiduMap baiduMap, String stopName) {
         mBaiduMap = baiduMap;
+        neary_stop = stopName;
         // mBaiduMap.setOnMarkerClickListener(this);
         if (mOverlayOptionList == null) {
             mOverlayOptionList = new ArrayList<OverlayOptions>();
@@ -49,6 +66,7 @@ public abstract class OverlayManager implements OnMarkerClickListener, OnPolylin
             mOverlayList = new ArrayList<Overlay>();
         }
     }
+
 
     /**
      * 覆写此方法设置要管理的Overlay列表
@@ -61,19 +79,57 @@ public abstract class OverlayManager implements OnMarkerClickListener, OnPolylin
      * 将所有Overlay 添加到地图上
      */
     public final void addToMap() {
+
+
         if (mBaiduMap == null) {
             return;
         }
+        try {
+            mBaiduMap.clear();
+            //Thread.sleep(5000);
+            removeFromMap();
+            List<OverlayOptions> overlayOptions = getOverlayOptions();
+            if (overlayOptions != null) {
+                mOverlayOptionList.addAll(getOverlayOptions());
+            }
 
-        removeFromMap();
-        List<OverlayOptions> overlayOptions = getOverlayOptions();
-        if (overlayOptions != null) {
-            mOverlayOptionList.addAll(getOverlayOptions());
+            for (OverlayOptions option : mOverlayOptionList) {
+                mOverlayList.add(mBaiduMap.addOverlay(option));
+            }
+            for (OverlayOptions options : bus_option) {
+                mBaiduMap.addOverlay(options);
+
+            }
+            bus_option.clear();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        for (OverlayOptions option : mOverlayOptionList) {
-            mOverlayList.add(mBaiduMap.addOverlay(option));
+    }
+
+    public final NextBuses updateBusImg(String bus_api) {
+
+        String str_businfo;
+        try {
+            Thread.sleep(2000);
+            str_businfo = HttpUtil.httpGet(bus_api);
+            busInfo = MAPPER.readValue(str_businfo, BusDomJson.class);
+            nextBuses = busInfo.getItems().get(0).getRoutes().get(0).getNextBuses();
+            //for (Buses bus : nextBuses.getBuses()) {
+            //    LatLng latLng = new LatLng(bus.getLat(), bus.getLng());
+            //    // codeing--
+            //    //mBaiduMap.clear();
+            //    BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromAssetWithDpi("next_bus.png");
+            //    OverlayOptions option = new MarkerOptions().position(latLng).icon(bitmapDescriptor);
+            //    bus_option.add(option);
+            //    //mBaiduMap.addOverlay(new MarkerOptions().position(latLng).icon(bitmapDescriptor));
+            //}
+            return nextBuses;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return null;
+
     }
 
     /**
@@ -91,34 +147,6 @@ public abstract class OverlayManager implements OnMarkerClickListener, OnPolylin
 
     }
 
-    /**
-     * 缩放地图，使所有Overlay都在合适的视野内
-     * <p>
-     * 注： 该方法只对Marker类型的overlay有效
-     * </p>
-     */
-    public void zoomToSpan() {
-        if (mBaiduMap == null) {
-            return;
-        }
-        if (mOverlayList.size() > 0) {
-            LatLngBounds.Builder builder = new LatLngBounds.Builder();
-            for (Overlay overlay : mOverlayList) {
-                // polyline 中的点可能太多，只按marker 缩放
-                if (overlay instanceof Marker) {
-                    builder.include(((Marker) overlay).getPosition());
-                }
-            }
-            MapStatus mapStatus = mBaiduMap.getMapStatus();
-            if (null != mapStatus){
-                int width = mapStatus.winRound.right - mBaiduMap.getMapStatus().winRound.left - 400;
-                int height = mapStatus.winRound.bottom - mBaiduMap.getMapStatus().winRound.top - 400;
-                mBaiduMap.setMapStatus(MapStatusUpdateFactory
-                        .newLatLngBounds(builder.build(), width, height));
-            }
-
-        }
-    }
 
     /**
      * 设置显示在规定宽高中的地图地理范围

@@ -39,7 +39,7 @@ public class LocateUtil {
         LocationClientOption option = new LocationClientOption();
         option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
         option.setCoorType("gcj02");//可选，默认gcj02，设置返回的定位结果坐标系
-        int span = 5000;
+        int span = 10000;
         option.setScanSpan(span);//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
         option.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
         option.setOpenGps(true);//可选，默认false,设置是否使用gps
@@ -87,7 +87,7 @@ public class LocateUtil {
         public void onReceiveLocation(BDLocation location) {
             setBdLocation(location);
             latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            Log.d("百度地图定位application",latLng.toString());
+            //Log.d("百度地图定位application",latLng.toString());
         }
     }
 }

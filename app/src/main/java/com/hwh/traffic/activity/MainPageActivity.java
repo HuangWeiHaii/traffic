@@ -83,7 +83,8 @@ public class MainPageActivity extends AppCompatActivity {
 
         //更新 latlng 和 poiInfo 开启一条线程去执行 POI 搜索公交站
         initViews();
-        updatePoiInfo("85");  //一个不理解的BUG 需要在onCreate方法中先更新一下百度地图的POI
+
+        updatePoiInfo("");  //一个不理解的BUG 需要在onCreate方法中先更新一下百度地图的POI
 
 
     }
@@ -269,18 +270,6 @@ public class MainPageActivity extends AppCompatActivity {
                 //
                 //}
                 busApi = getBusApi(routeName);
-                getBusUidByRouteName(routeName);
-                //updatePoiInfo(routeName);
-
-                while (busUid== null){
-                    try {
-                        Thread.sleep(200);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                String[] busUids = new String[]{busUid.get(0), busUid.get(1)};
-
                 try {
                     //不可在主线程中使用HTTP请求 只能在异步请求
                     getDatasync(busApi);
@@ -292,8 +281,8 @@ public class MainPageActivity extends AppCompatActivity {
                     Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
                     intent.putExtra("BUS_INFO", busDomJson);
                     intent.putExtra("BUS_API", busApi);
-                    intent.putExtra("BUS_UID", busUids);
-
+                    intent.putExtra("ROUTE_NAME",routeName);
+                    //intent.putExtra("BUS_UID", busUids);
                     //intent.putExtra("BUS_STOPNAME",stopName);
                     startActivity(intent);
                 } catch (Exception e) {
@@ -422,15 +411,16 @@ public class MainPageActivity extends AppCompatActivity {
 
     public void getBusUidByRouteName(String routeName) {
 
-        mPoiSearch = PoiSearch.newInstance();
+        busUid = new ArrayList<>();
+
         mPoiSearch.setOnGetPoiSearchResultListener(new OnGetPoiSearchResultListener() {
+
             @Override
             public void onGetPoiResult(PoiResult result) {
                 if (result == null || result.error != SearchResult.ERRORNO.NO_ERROR) {
                     System.out.println("error");
                     return;
                 }
-                busUid = new ArrayList<>();
                 for (PoiInfo poi : result.getAllPoi()) {
                     System.out.println(" uid = " + poi.uid);
                     busUid.add(poi.uid);
@@ -453,12 +443,11 @@ public class MainPageActivity extends AppCompatActivity {
 
             }
         });
-
         System.out.println(routeName);
         mPoiSearch.searchInCity(new PoiCitySearchOption().city("福州").keyword(routeName + "公交"));
         System.out.println("开始搜索");
 
-        while (busUid== null) {
+        while (busUid.size() == 0){
             try {
                 Thread.sleep(200);
                 System.out.println("正在搜索" + routeName);
