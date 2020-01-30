@@ -80,13 +80,11 @@ public abstract class OverlayManager implements OnMarkerClickListener, OnPolylin
      */
     public final void addToMap() {
 
-
         if (mBaiduMap == null) {
             return;
         }
         try {
             mBaiduMap.clear();
-            //Thread.sleep(5000);
             removeFromMap();
             List<OverlayOptions> overlayOptions = getOverlayOptions();
             if (overlayOptions != null) {
@@ -111,19 +109,9 @@ public abstract class OverlayManager implements OnMarkerClickListener, OnPolylin
 
         String str_businfo;
         try {
-            Thread.sleep(2000);
             str_businfo = HttpUtil.httpGet(bus_api);
             busInfo = MAPPER.readValue(str_businfo, BusDomJson.class);
             nextBuses = busInfo.getItems().get(0).getRoutes().get(0).getNextBuses();
-            //for (Buses bus : nextBuses.getBuses()) {
-            //    LatLng latLng = new LatLng(bus.getLat(), bus.getLng());
-            //    // codeing--
-            //    //mBaiduMap.clear();
-            //    BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromAssetWithDpi("next_bus.png");
-            //    OverlayOptions option = new MarkerOptions().position(latLng).icon(bitmapDescriptor);
-            //    bus_option.add(option);
-            //    //mBaiduMap.addOverlay(new MarkerOptions().position(latLng).icon(bitmapDescriptor));
-            //}
             return nextBuses;
         } catch (Exception e) {
             e.printStackTrace();

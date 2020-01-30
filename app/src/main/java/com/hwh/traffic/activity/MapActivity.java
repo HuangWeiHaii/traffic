@@ -1,23 +1,18 @@
 package com.hwh.traffic.activity;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.baidu.location.BDLocation;
-import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
-import com.baidu.location.LocationClientOption;
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.baidu.mapapi.map.MapCustomStyleOptions;
-import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
@@ -31,18 +26,15 @@ import com.baidu.mapapi.search.busline.BusLineSearchOption;
 import com.baidu.mapapi.search.busline.OnGetBusLineSearchResultListener;
 import com.baidu.mapapi.search.core.SearchResult;
 import com.baidu.mapapi.search.poi.PoiSearch;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwh.traffic.MapApplication;
 import com.hwh.traffic.R;
 import com.hwh.traffic.busEntity.BusDomJson;
 import com.hwh.traffic.busEntity.Buses;
 import com.hwh.traffic.busEntity.NextBuses;
 import com.hwh.traffic.utils.BusLineOverlay;
-import com.hwh.traffic.utils.HttpUtil;
 
-import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -53,33 +45,16 @@ import java.util.List;
 public class MapActivity extends AppCompatActivity implements View.OnClickListener {
     private MapView mMapView;
     private BaiduMap mBaiduMap;
-    public LocationClient mLocationClient;
-
     private Button bt;
     private Button button;
     private Button buttons;
     private LatLng latLng;
-    private boolean isFirstLoc = true; // 是否首次定位
     private MapApplication mapApplication;
     private BusLineSearch busLineSearch;
-
-
-    private Button mPreviousBtn = null; // 上一个节点
-    private Button mNextBtn = null; // 下一个节点
     private BusLineResult mBusLineResult = null; // 保存驾车/步行路线数据的变量，供浏览节点时使用
-    private List<String> mBusLineIDList = null;
-    private int mBusLineIndex = 0;
-    // 搜索相关
-    private PoiSearch mSearch = null; // 搜索模块，也可去掉地图模块独立使用
-    private BusLineSearch mBusLineSearch = null;
-
-
     private BusLineOverlay mBusLineOverlay; // 公交路线绘制对象
-    private EditText mEditCity;
-    private EditText mEditSearchKey;
     private String bus_api;
-    private BusDomJson busInfo;
-    private NextBuses nextBuses;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,10 +65,10 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         initMap();
 
         String neary_stop = getIntent().getStringExtra("BUS_NEXT");
-        mBusLineOverlay = new BusLineOverlay(mBaiduMap,neary_stop);
+        mBusLineOverlay = new BusLineOverlay(mBaiduMap, neary_stop);
         String bus_line_uid = getIntent().getStringExtra("BUS_LINE_UID");
         bus_api = getIntent().getStringExtra("BUS_API");
-        System.out.println("map --------"+bus_line_uid);
+        System.out.println("map --------" + bus_line_uid);
         busLineSearch = BusLineSearch.newInstance();
 
         //确认公交POI UID 的正确方向
@@ -107,31 +82,40 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
                 mBusLineResult = result;
                 mBusLineOverlay.removeFromMap();
                 mBusLineOverlay.setData(result);
-                new Thread(()->{
-                    NextBuses nextBuses = mBusLineOverlay.updateBusImg(bus_api);
-                    runOnUiThread(()->{
-                        for (Buses bus : nextBuses.getBuses()) {
-                            LatLng latLng = new LatLng(bus.getLat(), bus.getLng());
-                            //mBaiduMap.clear();
-                            BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromAssetWithDpi("behind_bus.png");
-                            OverlayOptions option = new MarkerOptions().position(latLng).icon(bitmapDescriptor);
-                            mBaiduMap.addOverlay(option);
-                            //mBaiduMap.addOverlay(new MarkerOptions().position(latLng).icon(bitmapDescriptor));
+                mBusLineOverlay.addToMap();
+                new Thread(() -> {
+                    int temp = 1;
+                    while (true) {
+                        if (mBaiduMap != null) {
+                            NextBuses nextBuses = mBusLineOverlay.updateBusImg(bus_api);
+                            mBusLineOverlay.addToMap();
+                            for (Buses bus : nextBuses.getBuses()) {
+                                LatLng latLng = new LatLng(bus.getLat(), bus.getLng());
+                                //mBaiduMap.clear();
+                                BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromAssetWithDpi("behind_bus.png");
+                                OverlayOptions option = new MarkerOptions().position(latLng).icon(bitmapDescriptor).anchor(0.5f, 0.5f);
+                                mBaiduMap.addOverlay(option);
+                            }
+                            if (nextBuses.getBuses().size() != 0) {
+                                Buses bus = nextBuses.getBuses().get(0);
+                                LatLng latLng = new LatLng(bus.getLat(), bus.getLng());
+                                BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromAssetWithDpi("next_bus.png");
+                                OverlayOptions option = new MarkerOptions().position(latLng).icon(bitmapDescriptor).zIndex(10).anchor(0.5f, 0.5f);
+                                mBaiduMap.addOverlay(option);
+                            }
+                            try {
+                                if (temp == 1) {
+                                    mBusLineOverlay.zoomToSpan();
+                                    temp++;
+                                }
+                                Thread.sleep(3000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
                         }
-                    });
-                    //这个BUS是会动的
-                    if (nextBuses.getBuses().size() != 0){
-                        Buses bus = nextBuses.getBuses().get(0);
-                        LatLng latLng = new LatLng(bus.getLat(), bus.getLng());
-                        BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromAssetWithDpi("next_bus.png");
-                        OverlayOptions option = new MarkerOptions().position(latLng).icon(bitmapDescriptor).zIndex(10);
-                        mBaiduMap.addOverlay(option);
                     }
                 }).start();
-                //mBusLineOverlay.updateBusImg(bus_api);
-                mBusLineOverlay.addToMap();
                 mBusLineOverlay.zoomToSpan();
-
             }
         });
         busLineSearch.searchBusLine((new BusLineSearchOption()
@@ -139,8 +123,6 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
                 .uid(bus_line_uid)));// 设置公交路线uid
 
     }
-
-
 
 
     private void initMap() {
@@ -167,16 +149,21 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         mMapView.setMapCustomStyleEnable(true);
         mBaiduMap = mMapView.getMap();
 
+
         //普通地图
         mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
         mBaiduMap.setMyLocationEnabled(true);
+        mBaiduMap.setBuildingsEnabled(false);
+        mBaiduMap.setCompassEnable(true);
+
+
         mapApplication = (MapApplication) getApplication();
 
         //通过异步执行,防止线程阻塞 因为Application会等待Activity的onCreate执行完后才开始定位
-        new Thread(){
+        new Thread() {
             @Override
             public void run() {
-                while (mapApplication.getLatLng() == null){
+                while (mapApplication.getLatLng() == null) {
                     try {
                         Thread.sleep(1000);
                         System.out.println("正在定位");
@@ -189,7 +176,7 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
                 latLng = mapApplication.getLatLng();
                 BDLocation bdLocation = mapApplication.getBdLocation();
 //                LatLng latLng = new LatLng(bdLocation.getLatitude(),bdLocation.getLongitude());
-                System.out.println("获取BDlcation成功"+latLng.toString());
+                System.out.println("获取BDlcation成功" + latLng.toString());
                 // 构造定位数据
                 MyLocationData locData = new MyLocationData.Builder()
                         .accuracy(bdLocation.getRadius())
@@ -208,6 +195,7 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         }.start();
 //
     }
+
     private void initView() {
         mMapView = (MapView) findViewById(R.id.bmapView);
         bt = (Button) findViewById(R.id.bt);
@@ -237,6 +225,7 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         super.onPause();
         //在activity执行onPause时执行mMapView. onPause ()，实现地图生命周期管理
         mMapView.onPause();
+        //mBaiduMap = null;
     }
 
     @Override
@@ -244,13 +233,16 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         switch (v.getId()) {
             case R.id.bt:
                 //把定位点再次显现出来
-                System.out.println("复位:"+latLng.toString());
+                System.out.println("复位:" + latLng.toString());
                 MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory.newLatLng(latLng);
                 mBaiduMap.animateMapStatus(mapStatusUpdate);
                 break;
             case R.id.button:
                 //卫星地图
                 mBaiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);
+                //mBaiduMap.setMyLocationEnabled(true);
+                //mBaiduMap.setTrafficEnabled(true);
+
                 break;
             case R.id.buttons:
                 //普通地图

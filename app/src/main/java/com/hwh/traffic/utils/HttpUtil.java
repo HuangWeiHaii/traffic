@@ -11,14 +11,15 @@ import java.net.*;
  */
 public class HttpUtil {
 
-    private static HttpURLConnection conn;
-    private static BufferedReader bfr;
+    //private static HttpURLConnection conn;
+    //private static BufferedReader bfr;
 
 
     public static String httpPost(String url, String canshu) throws InterruptedException {
         try {
 
-
+            HttpURLConnection conn = null;
+            BufferedReader bfr = null;
 //            CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
             URL ur = new URL(url);
             conn = (HttpURLConnection) ur.openConnection();
@@ -44,7 +45,6 @@ public class HttpUtil {
                 data = data + line;
             }
             bfr.close();
-            bfr = null;
             return data;
         } catch (IOException e) {
             e.printStackTrace();
@@ -57,6 +57,9 @@ public class HttpUtil {
 
     public static String httpGet(String url) {
         try {
+            HttpURLConnection conn = null;
+            BufferedReader bfr = null;
+
             URL ur = new URL(url);
             conn = (HttpURLConnection) ur.openConnection();
             conn.setRequestMethod("GET");
@@ -67,8 +70,8 @@ public class HttpUtil {
             conn.setDoInput(true);
             conn.connect();
             //读取返回数据
-            InputStream i = conn.getInputStream();
             Thread.sleep(20);
+            InputStream i = conn.getInputStream();
             bfr = new BufferedReader(new InputStreamReader(i));
             String line;
             String data = "";

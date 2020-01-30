@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.util.Log;
 
 import com.baidu.mapapi.map.BaiduMap;
+import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
@@ -58,11 +59,11 @@ public class BusLineOverlay extends OverlayManager {
             if (neary_stop.contains(station.getTitle())) {
                 //读取最近站点的位置
                 latLng = station.getLocation();
-                System.out.println("查询到地址 " + latLng.toString());
+                //System.out.println("查询到地址 " + latLng.toString());
             }
-            System.out.println(neary_stop);
-            System.out.println("station title = " + station.getTitle());
-            System.out.println("station location = " + station.getLocation().toString());
+            //System.out.println(neary_stop);
+            //System.out.println("station title = " + station.getTitle());
+            //System.out.println("station location = " + station.getLocation().toString());
             overlayOptionses.add(new MarkerOptions()
                     .position(station.getLocation())
                     .zIndex(10)
@@ -82,12 +83,16 @@ public class BusLineOverlay extends OverlayManager {
             }
         }
         if (points.size() > 0) {
-
-            System.out.println("pointsize = " + points.size());
+            BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromAssetWithDpi("Icon_road_green_arrow.png");
             overlayOptionses
-                    .add(new PolylineOptions().width(12)
-                            .color(Color.argb(178, 0, 255, 0)).zIndex(0)
-                            .points(points));
+                    .add(new PolylineOptions()
+                            .width(16)
+                            //.color(Color.argb(178, 0, 255, 0))
+                            .zIndex(0)
+                            .visible(true)
+                            .points(points)
+                            .customTexture(bitmapDescriptor)
+                    );
         }
         return overlayOptionses;
     }

@@ -56,15 +56,10 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     private BusDomJson busInfo = null;
     private String busApi[] = null;
     private static ObjectMapper MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private String now_stopName;
     private String oppsite_api;
     private String forw_api;
     private String forw_uid;
     private String oppsite_uid;
-
-    //高亮站点的索引
-    private int stop_index = 0;
-    private boolean isNear = false;//用来确认是否有附近站点
     private boolean isForw = true;
     //构造一个 存储实时公交index的集合
     List<Integer> indexList = new ArrayList<>();
@@ -147,17 +142,13 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bus_info);
 
-
-
         busInfo = (BusDomJson) getIntent().getSerializableExtra("BUS_INFO");
         busApi = getIntent().getStringArrayExtra("BUS_API");
         String route_name = getIntent().getStringExtra("ROUTE_NAME");
+
+        //POI搜索BUS路线的UID
         getBusUidByRouteName(route_name);
-        //bus_uid = getIntent().getStringArrayExtra("BUS_UID");
-
-
         //确认公交POI UID 的正确方向
-
         flush_img = findViewById(R.id.bus_img_flush);
         bus_img_opposite = findViewById(R.id.bus_img_opposite);
         bus_img_map = findViewById(R.id.bus_img_map);
@@ -183,15 +174,12 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
             toBusMapRouteActivity();
         });
 
-
         forw_api = busApi[0];
         now_bus_api = forw_api;
         oppsite_api = busApi[1];
-
         System.out.println(busInfo);
         System.out.println("正向API = " + forw_api);
         System.out.println("反向API = " + oppsite_api);
-        //System.out.println(now_stopName);
 
         //将实时公交信息渲染 并设置按钮监听
         getBusListUI(busInfo);
@@ -246,22 +234,15 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void getBusListUI(final BusDomJson busInfo) {
 
-
-
         bus_info_list = findViewById(R.id.bus_info_list);
-
         stopsList = busInfo.getItems().get(0).getRoutes().get(0).getStops();
-
         //获取 nextBuses 可获取当前站点名 与 所有公交所在站点信息 (新API)  用来确定距离与到达时间
         nextBuses = busInfo.getItems().get(0).getRoutes().get(0).getNextBuses();
-
         for (Stops stops : stopsList) {
-
             List<Buses> list = stops.getBuses();
             if (list != null && list.size() != 0) {
                 indexList.add(stopsList.indexOf(stops)); //添加公交车在stopList中的索引值 到 indexList
             }
-
             //显示一条路线
             LinearLayout mLinearLayout = new LinearLayout(getApplicationContext());
             ImageView mImageView_point = new ImageView(getApplicationContext());
@@ -307,7 +288,6 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
             mTextView_stop.setTextColor(getResources().getColor(R.color.black));
             //设置离我最近的站点为橘色
             if (stops.getRouteStop().getStopName().contains(nextBuses.getStopName())) {
-                isNear = true;
                 mTextView_stop.setTextColor(getResources().getColor(R.color.orange));
                 mImageView_point.setImageResource(R.drawable.stop_select);
             }
@@ -462,76 +442,69 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
      * @description 更新实时公交信息
      */
     public void updataBusListInfo() {
-        new Thread(new Runnable() {
-            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-            @Override
-            public void run() {
-                try {
-                    String str_businfo;
-                    if (isForw) {
-                        str_businfo = HttpUtil.httpGet(forw_api);
-                    }else {
-                        str_businfo = HttpUtil.httpGet(oppsite_api);
-                    }
-                    busInfo = MAPPER.readValue(str_businfo, BusDomJson.class);
-                    System.out.println(busApi);
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-
-                            stopsList = busInfo.getItems().get(0).getRoutes().get(0).getStops();
-                            indexList.clear();
-                            nextBuses = busInfo.getItems().get(0).getRoutes().get(0).getNextBuses();
-                            List<Buses> buses = nextBuses.getBuses();
-                            int n = 0;
-                            for (Buses bus : buses) {
-                                System.out.println(bus.getNextStation());
-                                TextView t1 = findViewById(targetIdMap.get("target_text_count_" + n));
-                                TextView t2 = findViewById(targetIdMap.get("target_text_distance_" + n));
-                                int targetDistance = bus.getTargetDistance();
-                                int targetStopCount = bus.getTargetStopCount();
-                                int targetSeconds = bus.getTargetSeconds();
-                                if (targetStopCount == 0) {
-                                    t1.setText("即将到站");
-                                    t1.setTextColor(getResources().getColor(R.color.orange));
-                                } else {
-                                    t1.setText(targetStopCount + "站");
-                                }
-                                t2.setText(TimeUtil.secToMin(targetSeconds) + "/" + targetDistance + "米");
-                                n++;
-                                if (n == 2) {
-                                    break;
-                                }
-
-                            }
-
-                            for (Stops stops : stopsList) {
-                                List<Buses> list = stops.getBuses();
-                                if (list != null && list.size() != 0) {
-                                    indexList.add(stopsList.indexOf(stops)); //添加公交车在stopList中的索引值 到 indexList
-                                }
-                            }
-
-                            //取消掉small_bus的UI
-                            for (Integer integer : imageView_bus_list) {
-                                ImageView small_bus = findViewById(integer);
-                                small_bus.setImageDrawable(null);
-                            }
-
-                            //将所有即将到来的公交设置UI (小公交UI)  刷新小公交UI
-                            for (Integer integer : indexList) {
-                                ImageView small_bus = findViewById(imageView_bus_list.get(integer));
-                                small_bus.setImageResource(R.drawable.small_bus);
-                            }
-
-
-                        }
-                    });
-                    Log.d("updataBusListInfo", "更新实时公交数据成功");
-                } catch (IOException e) {
-                    e.printStackTrace();
+        new Thread(() -> {
+            try {
+                String str_businfo;
+                if (isForw) {
+                    str_businfo = HttpUtil.httpGet(forw_api);
+                }else {
+                    str_businfo = HttpUtil.httpGet(oppsite_api);
                 }
+                busInfo = MAPPER.readValue(str_businfo, BusDomJson.class);
+                System.out.println(busApi);
+
+                runOnUiThread(() -> {
+
+                    stopsList = busInfo.getItems().get(0).getRoutes().get(0).getStops();
+                    indexList.clear();
+                    nextBuses = busInfo.getItems().get(0).getRoutes().get(0).getNextBuses();
+                    List<Buses> buses = nextBuses.getBuses();
+                    int n = 0;
+                    for (Buses bus : buses) {
+                        System.out.println(bus.getNextStation());
+                        TextView t1 = findViewById(targetIdMap.get("target_text_count_" + n));
+                        TextView t2 = findViewById(targetIdMap.get("target_text_distance_" + n));
+                        int targetDistance = bus.getTargetDistance();
+                        int targetStopCount = bus.getTargetStopCount();
+                        int targetSeconds = bus.getTargetSeconds();
+                        if (targetStopCount == 0) {
+                            t1.setText("即将到站");
+                            t1.setTextColor(getResources().getColor(R.color.orange));
+                        } else {
+                            t1.setText(targetStopCount + "站");
+                        }
+                        t2.setText(TimeUtil.secToMin(targetSeconds) + "/" + targetDistance + "米");
+                        n++;
+                        if (n == 2) {
+                            break;
+                        }
+
+                    }
+
+                    for (Stops stops : stopsList) {
+                        List<Buses> list = stops.getBuses();
+                        if (list != null && list.size() != 0) {
+                            indexList.add(stopsList.indexOf(stops)); //添加公交车在stopList中的索引值 到 indexList
+                        }
+                    }
+
+                    //取消掉small_bus的UI
+                    for (Integer integer : imageView_bus_list) {
+                        ImageView small_bus = findViewById(integer);
+                        small_bus.setImageDrawable(null);
+                    }
+
+                    //将所有即将到来的公交设置UI (小公交UI)  刷新小公交UI
+                    for (Integer integer : indexList) {
+                        ImageView small_bus = findViewById(imageView_bus_list.get(integer));
+                        small_bus.setImageResource(R.drawable.small_bus);
+                    }
+
+
+                });
+                Log.d("updataBusListInfo", "更新实时公交数据成功");
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }).start();
     }
@@ -539,69 +512,50 @@ public class BusInfoActivity extends AppCompatActivity implements View.OnClickLi
     /**
      * @description 反向列表
      */
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void oppositeBusListInfo() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String opposite_bus_json_info = "";
-                    if (isForw){
-                        now_bus_uid = forw_uid;
-                        now_bus_api = oppsite_api;
-                        opposite_bus_json_info = HttpUtil.httpGet(oppsite_api);
-                        isForw = !isForw;
-                        System.out.println("点击反向后UID"+now_bus_uid);
-                    }
-                    else {
-                        now_bus_uid = oppsite_uid;
-                        now_bus_api = forw_api;
-                        opposite_bus_json_info = HttpUtil.httpGet(forw_api);
-                        isForw = !isForw;
-                        System.out.println("点击反向后UID"+now_bus_uid);
-                    }
-                    busInfo = MAPPER.readValue(opposite_bus_json_info, BusDomJson.class);
-                    stopsList = busInfo.getItems().get(0).getRoutes().get(0).getStops();
-                    //修改列表UI
-                    //1 修改站点名称
-                    // 难点 1 正向站点数 和反向站点数 不一样 不可以用list直接拿ID改UI
-                    // 思路 先设置所有UI 不可见 隐藏 View.GONE  再开始展示UI
-                    // 如果正向站点数 大于反向站点数 显示小的方向站点数的UI 若小于 将TextViewList扩容 再动态添加几个TextView 进去
-                    runOnUiThread(new Runnable() {
-                        @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-                        @Override
-                        public void run() {
-                          /*  //设置所有站点名UI 不可见 隐藏 View.GONE
-                            for (Integer integer : textView_list) {
-                                findViewById(integer).setVisibility(View.GONE);
-                            }
-                            //设置所有小公交UI 隐藏
-                            for (Integer integer : imageView_bus_list) {
-                                findViewById(integer).setVisibility(View.GONE);
-                            }*/
-                            //设置所有视图 隐藏
-                           /* for (Integer integer : linearLayout_list) {
-                                findViewById(integer).setVisibility(View.GONE);
-                            }*/
-                            //清空之前保留的ID信息
-                            imageView_bus_list.clear();
-                            imageView_point_list.clear();
-                            linearLayout_list.clear();
-                            textView_list.clear();
-                            indexList.clear();
-                            bus_info_target.removeAllViews();
-                            bus_info_list.removeAllViews();
-                            linearLayout_list.clear();
-                            //重新刷新公交列表UI
-                            getBusListUI(busInfo);
-
-                            //bus_info_list.setVisibility(View.GONE);
-
-                        }
-                    });
-
-                } catch (IOException e) {
-                    e.printStackTrace();
+        new Thread(() -> {
+            try {
+                String opposite_bus_json_info = "";
+                if (isForw){
+                    now_bus_uid = forw_uid;
+                    now_bus_api = oppsite_api;
+                    opposite_bus_json_info = HttpUtil.httpGet(oppsite_api);
+                    isForw = !isForw;
+                    System.out.println("点击反向后UID"+now_bus_uid);
                 }
+                else {
+                    now_bus_uid = oppsite_uid;
+                    now_bus_api = forw_api;
+                    opposite_bus_json_info = HttpUtil.httpGet(forw_api);
+                    isForw = !isForw;
+                    System.out.println("点击反向后UID"+now_bus_uid);
+                }
+                busInfo = MAPPER.readValue(opposite_bus_json_info, BusDomJson.class);
+                stopsList = busInfo.getItems().get(0).getRoutes().get(0).getStops();
+                //修改列表UI
+                //1 修改站点名称
+                // 难点 1 正向站点数 和反向站点数 不一样 不可以用list直接拿ID改UI
+                // 思路 先设置所有UI 不可见 隐藏 View.GONE  再开始展示UI
+                // 如果正向站点数 大于反向站点数 显示小的方向站点数的UI 若小于 将TextViewList扩容 再动态添加几个TextView 进去
+                runOnUiThread(() -> {
+                    //清空之前保留的ID信息
+                    imageView_bus_list.clear();
+                    imageView_point_list.clear();
+                    linearLayout_list.clear();
+                    textView_list.clear();
+                    indexList.clear();
+                    bus_info_target.removeAllViews();
+                    bus_info_list.removeAllViews();
+                    linearLayout_list.clear();
+                    //重新刷新公交列表UI
+                    getBusListUI(busInfo);
+
+
+                });
+
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }).start();
 
