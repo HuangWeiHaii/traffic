@@ -49,7 +49,6 @@ public class MainPageActivity extends AppCompatActivity {
     private TextView main_like_text;
     private TextView main_location_text;
     private TextView main_user_text;
-    private ImageView main_page_delete;
     private MapApplication mapApplication;
     private LatLng latLng;
     private String routeName;
