@@ -5,6 +5,7 @@ public class Record {
     private String search_route;
     private String search_end;
 
+    
     public Integer getRecord_id() {
         return record_id;
     }
