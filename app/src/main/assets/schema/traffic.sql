@@ -1,5 +1,12 @@
 DROP TABLE IF EXISTS `route`;
 
+
+CREATE TABLE `search` (
+  `search_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `search_route` varchar(64) DEFAULT NULL,
+  `search_end` varchar(20) DEFAULT NULL
+);
+
 CREATE TABLE `route` (
   `route_id` bigint(20) DEFAULT NULL,
   `route_name` varchar(64) DEFAULT NULL,

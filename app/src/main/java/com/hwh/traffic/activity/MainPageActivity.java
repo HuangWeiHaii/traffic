@@ -2,11 +2,16 @@ package com.hwh.traffic.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.baidu.mapapi.model.LatLng;
@@ -15,12 +20,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwh.traffic.MapApplication;
 import com.hwh.traffic.busApiEntity.NewBusApi;
 import com.hwh.traffic.R;
+import com.hwh.traffic.busEntity.Record;
 import com.hwh.traffic.db.TrafficLab;
 import com.hwh.traffic.busEntity.BusDomJson;
 import com.hwh.traffic.utils.ButtonUtil;
+import com.hwh.traffic.utils.DensityUtil;
 import com.hwh.traffic.utils.HttpUtil;
 import org.apache.commons.lang3.StringUtils;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author 黄威海
@@ -41,12 +49,15 @@ public class MainPageActivity extends AppCompatActivity {
     private TextView main_like_text;
     private TextView main_location_text;
     private TextView main_user_text;
+    private ImageView main_page_delete;
     private MapApplication mapApplication;
     private LatLng latLng;
     private String routeName;
     private Long route_id;  //正向路线ID
     private Long oppsite_id; //反向路线ID
     private String[] busApi; //实时公交API
+    private TrafficLab trafficLab;
+    private LinearLayout bus_search_list;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +65,7 @@ public class MainPageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main_page);
 
         mapApplication = (MapApplication) getApplication();
-
+        trafficLab = mapApplication.getTrafficLab();
         //更新 latlng 和 poiInfo 开启一条线程去执行 POI 搜索公交站
         initViews();
         updatePoiInfo();
@@ -167,7 +178,13 @@ public class MainPageActivity extends AppCompatActivity {
                     intent.putExtra("BUS_INFO", busDomJson);
                     intent.putExtra("BUS_API", busApi);
                     intent.putExtra("ROUTE_NAME",routeName);
+
+                    //将搜素记录插入SQLite
+                    int index  = busDomJson.getItems().get(0).getRoutes().get(0).getStops().size() - 1;
+                    String endName = busDomJson.getItems().get(0).getRoutes().get(0).getStops().get(index).getRouteStop().getStopName();
+                    trafficLab.saveRecord(routeName,endName);
                     startActivity(intent);
+                    showSearchList();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -227,6 +244,84 @@ public class MainPageActivity extends AppCompatActivity {
             main_location_text.setTextColor(getResources().getColor(R.color.black));
             main_page_text.setTextColor(getResources().getColor(R.color.black));
         });
+
+
+        showSearchList();
+
+    }
+
+    private void showSearchList() {
+        bus_search_list = findViewById(R.id.main_page_searchlist);
+        bus_search_list.removeAllViews();
+        List<Record> recordList = trafficLab.findAllRecord();
+        for (Record record : recordList) {
+            //渲染搜索历史
+            LinearLayout mLinearLayout = new LinearLayout(getApplicationContext());
+            ImageView delete_img = new ImageView(getApplicationContext());
+            TextView search_text = new TextView(getApplicationContext());
+
+            bus_search_list.addView(mLinearLayout);
+            mLinearLayout.addView(search_text);
+            mLinearLayout.addView(delete_img);
+
+            ViewGroup.LayoutParams lp_LinearLayout = mLinearLayout.getLayoutParams();
+            lp_LinearLayout.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            lp_LinearLayout.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            mLinearLayout.setGravity(Gravity.CENTER);
+            mLinearLayout.setOrientation(LinearLayout.HORIZONTAL);
+            mLinearLayout.setLayoutParams(lp_LinearLayout);
+
+            LinearLayout.LayoutParams lp_TextView = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 1.0f);
+            lp_TextView.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            lp_TextView.width = DensityUtil.dip2px(getApplicationContext(), 340);
+            int dp_20= DensityUtil.dip2px(getApplicationContext(), 20);
+            int dp_10= DensityUtil.dip2px(getApplicationContext(), 10);
+            search_text.setTextSize(20);
+            search_text.setPadding(dp_20,dp_10,0,dp_10);
+            search_text.setTextColor(Color.BLACK);
+            search_text.setText(record.getSearch_route()+"路  方向  "+record.getSearch_end());
+            search_text.setOnClickListener(v -> {
+                busApi = getBusApi(record.getSearch_route());
+                try {
+                    //不可在主线程中使用HTTP请求 只能在异步请求
+                    new Thread(()->{
+                        try {
+                            String busInfo = HttpUtil.httpGet(busApi[0]);
+                            busDomJson = MAPPER.readValue(busInfo, BusDomJson.class);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
+                    while (busDomJson == null) {
+                        Thread.sleep(200);
+                        Log.d("MainpageActivity", "正在获取公交数据");
+                    }
+                    Log.d("MainpageActivity", "获取成功");
+                    Intent intent = new Intent(MainPageActivity.this, BusInfoActivity.class);
+                    intent.putExtra("BUS_INFO", busDomJson);
+                    intent.putExtra("BUS_API", busApi);
+                    intent.putExtra("ROUTE_NAME",record.getSearch_route());
+                    startActivity(intent);
+                    } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            search_text.setLayoutParams(lp_TextView);
+
+            ViewGroup.LayoutParams lp_ImageView_point = delete_img.getLayoutParams();
+            lp_ImageView_point.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            lp_ImageView_point.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            delete_img.setImageResource(R.drawable.delete);
+            delete_img.setPadding(0,0,dp_10,0);
+            delete_img.setOnClickListener(v -> {
+                trafficLab.deleteRecord(record.getRecord_id());
+                LinearLayout linearLayout = (LinearLayout) delete_img.getParent();
+                linearLayout.setVisibility(View.GONE);
+            });
+
+        }
+
     }
 
     @Override

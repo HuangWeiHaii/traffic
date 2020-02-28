@@ -15,33 +15,45 @@ import java.io.InputStreamReader;
  */
 public class TrafficBaseHelper extends SQLiteOpenHelper {
 
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
     public static final String DATABASE_NAME = "traffic.db";
     public static final String DB_PATH = "schema";
     private Context mContext;
     public static final String ROUTE =
             "create table route ("
-            + TrafficDbSchema.RouteTable.cols.ROUTE_ID + ", "
-            + TrafficDbSchema.RouteTable.cols.ROUTE_NAME + ", "
-            + TrafficDbSchema.RouteTable.cols.OPPOSITE_ID + ")";
+                    + TrafficDbSchema.RouteTable.cols.ROUTE_ID + ", "
+                    + TrafficDbSchema.RouteTable.cols.ROUTE_NAME + ", "
+                    + TrafficDbSchema.RouteTable.cols.OPPOSITE_ID + ")";
 
     public static final String STOP =
             "create table route ("
-            + TrafficDbSchema.StopTable.cols.SID + ", "
-            + TrafficDbSchema.StopTable.cols.STOP_ID + ", "
-            + TrafficDbSchema.StopTable.cols.STOP_NAME + ")";
+                    + TrafficDbSchema.StopTable.cols.SID + ", "
+                    + TrafficDbSchema.StopTable.cols.STOP_ID + ", "
+                    + TrafficDbSchema.StopTable.cols.STOP_NAME + ")";
 
 
-    public TrafficBaseHelper(Context context){
-        super(context,DATABASE_NAME,null,VERSION);
+
+    public static final String SEARCH = "CREATE TABLE `search` (\n" +
+            "  `search_id` bigint(20) DEFAULT NULL,\n" +
+            "  `search_route` varchar(64) DEFAULT NULL,\n" +
+            "  `search_end` varchar(20) DEFAULT NULL\n" +
+            ")";
+
+
+
+
+
+
+    public TrafficBaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, VERSION);
         this.mContext = context;
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-//        db.execSQL(ROUTE);
+        //db.execSQL(SEARCH);
         executeAssetsSQL(db, "traffic.sql");
-        Log.d("db","创建表");
+        Log.d("db", "创建表");
     }
 
     @Override
@@ -51,14 +63,14 @@ public class TrafficBaseHelper extends SQLiteOpenHelper {
 
     /**
      * 读取数据库文件（.sql），并执行sql语句
-     * */
+     */
     private void executeAssetsSQL(SQLiteDatabase db, String schemaName) {
         BufferedReader in = null;
         try {
             in = new BufferedReader(new InputStreamReader(mContext.getAssets()
                     .open(DB_PATH + "/" + schemaName)));
 
-            System.out.println("路径:"+DB_PATH + "/" + schemaName);
+            System.out.println("路径:" + DB_PATH + "/" + schemaName);
             String line;
             String buffer = "";
             while ((line = in.readLine()) != null) {

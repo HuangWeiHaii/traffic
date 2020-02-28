@@ -21,4 +21,16 @@ public class TrafficDbSchema {
             public static final String STOP_NAME = "stop_name";
         }
     }
+
+    public static final class SearchTable{
+        public static final String NAME = "search";
+
+        public static final class cols{
+            public static final String SEARCH_ID = "search_id";
+            public static final String SEARCH_ROUTE_NAME = "search_route";
+            public static final String SEARCH_END_NAME = "search_end";
+        }
+    }
+
+
 }

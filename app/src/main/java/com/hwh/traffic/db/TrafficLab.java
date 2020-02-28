@@ -3,6 +3,10 @@ package com.hwh.traffic.db;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+
+import com.hwh.traffic.busEntity.Record;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class TrafficLab {
@@ -49,4 +53,39 @@ public class TrafficLab {
         return new Long[]{route_id,oppsite_id};
     }
 
+
+    /**
+     * @description 插入一条搜索记录
+     * @param routeName
+     * @param endName
+     */
+    public void saveRecord(String routeName,String endName){
+        String sql = "INSERT INTO search ('search_route','search_end') VALUES ('"+routeName+"','"+endName+"')";
+        System.out.println(sql);
+        mDatabase.execSQL(sql);
+    }
+
+    public List<Record> findAllRecord(){
+        List<Record> list = new ArrayList<>();
+        String sql = "SELECT search_id,search_route,search_end FROM search";
+        Cursor cursor = mDatabase.rawQuery(sql,null);
+        while (cursor.moveToNext()){
+            Record record = new Record();
+            int search_id = cursor.getInt(0);
+            String search_route = cursor.getString(1);
+            String search_end = cursor.getString(2);
+            record.setRecord_id(search_id);
+            record.setSearch_route(search_route);
+            record.setSearch_end(search_end);
+            list.add(record);
+        }
+        cursor.close();
+        return list;
+    }
+
+
+    public void deleteRecord(Integer record_id) {
+        String sql = "DELETE FROM search where search_id = "+record_id;
+        mDatabase.execSQL(sql);
+    }
 }
